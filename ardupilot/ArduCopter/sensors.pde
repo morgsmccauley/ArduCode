@@ -79,19 +79,19 @@ static void init_compass()
     ahrs.set_compass(&compass);
 }
 
-// initialise optical flow sensor
-static void init_optflow()
-{
-#if OPTFLOW == ENABLED
-    // exit immediately if not enabled
-    if (!optflow.enabled()) {
-        return;
-    }
-
     // initialise optical flow sensor
-    optflow.init();
-#endif      // OPTFLOW == ENABLED
-}
+    static void init_optflow()
+    {
+    #if OPTFLOW == ENABLED
+        // exit immediately if not enabled
+        if (!optflow.enabled()) {
+            return;
+        }
+
+        // initialise optical flow sensor
+        optflow.init();
+    #endif      // OPTFLOW == ENABLED
+    }
 
 // initialize the irlock sensor
 static void init_irlock()
@@ -108,42 +108,42 @@ static void init_irlock()
 #endif
 }
 
-// update the irlock sensor
-#if IRLOCK == ENABLED
-static Vector2f update_irlock(void)
-{
-    static uint32_t last_of_update = 0;
-    Vector2f pixy;
+    // update the irlock sensor
+    #if IRLOCK == ENABLED
+    static Vector2f update_irlock(void)
+    {
+        static uint32_t last_of_update = 0;
+        Vector2f pixy;
 
-    if (!irlock.enabled())
-        return pixy;
+        if (!irlock.enabled())
+            return pixy;
 
-    irlock.update();
-    
-    if (!irlock.healthy()){
-        DataFlash.Log_Write_Message("irlock_not_healthy");
-    } else {
-        DataFlash.Log_Write_Message("irlock_is_healthy");
-    }
-
-    if (irlock.last_update() != last_of_update) {
-        last_of_update = irlock.last_update();
-        irlock_block frame[IRLOCK_MAX_BLOCKS_PER_FRAME];
+        irlock.update();
         
-        irlock.get_current_frame(frame);
-
-        // cliSerial->print_P(PSTR("IRLOCK FRAME >>>>>>>>>>>>>>>>>>>>>\n"));
-        for (int i = 0; (int)i < (int)irlock.num_blocks(); ++i) {
-            // cliSerial->printf_P(PSTR("sig# %u at position (x=%u, y=%u) with (w=%u, h=%u)\n"),
-            //      frame[i].signature, frame[i].center_x, frame[i].center_y, frame[i].width, frame[i].height);
-            //Log_Write_Pixy(frame[i].signature, frame[i].center_x, frame[i].center_y, frame[i].width, frame[i].height);
-            pixy = {frame[i].center_x, frame[i].center_y};
+        if (!irlock.healthy()){
+            DataFlash.Log_Write_Message("irlock_not_healthy");
+        } else {
+            DataFlash.Log_Write_Message("irlock_is_healthy");
         }
-    }
 
-    return pixy;
-}
-#endif
+        if (irlock.last_update() != last_of_update) {
+            last_of_update = irlock.last_update();
+            irlock_block frame[IRLOCK_MAX_BLOCKS_PER_FRAME];
+            
+            irlock.get_current_frame(frame);
+
+            // cliSerial->print_P(PSTR("IRLOCK FRAME >>>>>>>>>>>>>>>>>>>>>\n"));
+            for (int i = 0; (int)i < (int)irlock.num_blocks(); ++i) {
+                // cliSerial->printf_P(PSTR("sig# %u at position (x=%u, y=%u) with (w=%u, h=%u)\n"),
+                //      frame[i].signature, frame[i].center_x, frame[i].center_y, frame[i].width, frame[i].height);
+                //Log_Write_Pixy(frame[i].signature, frame[i].center_x, frame[i].center_y, frame[i].width, frame[i].height);
+                pixy = {frame[i].center_x, frame[i].center_y};
+            }
+        }
+
+        return pixy;
+    }
+    #endif
 
 
 // called at 200hz

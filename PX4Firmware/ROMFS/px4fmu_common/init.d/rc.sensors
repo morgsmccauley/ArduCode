@@ -105,13 +105,13 @@ else
 	fi
 fi
 
-# Check for flow sensor
-if px4flow start
+# Check for irlock sensor
+if irlock start
 then
 fi
 
-# Check for irlock sensor
-if irlock start
+# Check for flow sensor
+if px4flow start
 then
 fi
 

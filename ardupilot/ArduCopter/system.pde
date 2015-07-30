@@ -196,7 +196,7 @@ static void init_ardupilot()
     camera_mount.init(serial_manager);
 #endif
 
-    init_irlock();
+     init_irlock();
 
 #ifdef USERHOOK_INIT
     USERHOOK_INIT

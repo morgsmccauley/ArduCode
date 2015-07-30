@@ -426,15 +426,15 @@
  # define MOUNT         ENABLED
 #endif
 
-//////////////////////////////////////////////////////////////////////////////
-// IR LOCK SENSOR
-#ifndef IRLOCK
-#if CONFIG_HAL_BOARD == HAL_BOARD_PX4
-#define IRLOCK ENABLED
-#else
-#define IRLOCK DISABLED
-#endif
-#endif
+  //////////////////////////////////////////////////////////////////////////////
+  // IR LOCK SENSOR
+  #ifndef IRLOCK
+  #if CONFIG_HAL_BOARD == HAL_BOARD_PX4
+  #define IRLOCK ENABLED
+  #else
+  #define IRLOCK DISABLED
+  #endif
+  #endif
 
 //////////////////////////////////////////////////////////////////////////////
 
