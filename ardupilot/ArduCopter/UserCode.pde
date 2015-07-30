@@ -6,7 +6,7 @@ void userhook_init()
     // put your initialisation code here
     // this will be called once at start-up
 
-    airspeed.init()
+    airspeed.init();
     airspeed.calibrate(false);
 }
 #endif
@@ -22,8 +22,8 @@ void userhook_FastLoop()
 void userhook_50Hz()
 {
     // put your 50Hz code here
-    vector2f pixy = update_irlock();
-    airspeed.read()
+    Vector2f pixy = update_irlock();
+    airspeed.read();
 
     hal.console->printf_P(PSTR("airspeed: %f"), airspeed.get_airspeed());
     hal.console->printf_P(PSTR("pixy: %f, %f"), pixy.x, pixy.y);
