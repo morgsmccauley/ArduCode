@@ -157,7 +157,7 @@
 #endif
 #include <AP_LandingGear.h>     // Landing Gear library
 #include <AP_Terrain.h>
-  #include <AP_IRLock.h>          //IRLock library
+#include <AP_IRLock.h>          //IRLock library
 
 // AP_HAL to Arduino compatibility layer
 #include "compat.h"
@@ -295,16 +295,16 @@ static float ekfGndSpdLimit;
 // scale factor applied to velocity controller gain to prevent optical flow noise causing excessive angle demand noise
 static float ekfNavVelGainScaler;
 
-  ////////////////////////////////////////////////////////////////////////////////
-  // IRLOCK SENSOR
-  ////////////////////////////////////////////////////////////////////////////////
-  #if IRLOCK == ENABLED
-  #if CONFIG_HAL_BOARD == HAL_BOARD_PX4
-  static AP_IRLock_PX4 irlock(ahrs);
-  #else
-  #error Unrecognized IRLOCK setting
-  #endif
-  #endif
+////////////////////////////////////////////////////////////////////////////////
+// IRLOCK SENSOR
+////////////////////////////////////////////////////////////////////////////////
+#if IRLOCK == ENABLED
+#if CONFIG_HAL_BOARD == HAL_BOARD_PX4
+static AP_IRLock_PX4 irlock(ahrs);
+#else
+#error Unrecognized IRLOCK setting
+#endif
+#endif
 
   ////////////////////////////////////////////////////////////////////////////////
   // AIRSPEED
