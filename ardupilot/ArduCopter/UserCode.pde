@@ -22,11 +22,16 @@ void userhook_FastLoop()
 void userhook_50Hz()
 {
     // put your 50Hz code here
-    Vector2f pixy = update_irlock();
+    update_irlock();
     airspeed.read();
 
-    hal.console->printf_P(PSTR("airspeed: %f"), airspeed.get_airspeed());
-    hal.console->printf_P(PSTR("pixy: %f, %f"), pixy.x, pixy.y);
+    float temp = 0;
+    airspeed.get_temperature(temp);
+
+    Log_Write_Airspeed(airspeed.get_airspeed(), airspeed.get_raw_airspeed(), airspeed.get_airspeed_ratio(), temp);
+
+    //hal.console->printf_P(PSTR("airspeed: %f"), airspeed.get_airspeed());
+    //hal.console->printf_P(PSTR("pixy: %f, %f"), pixy.x, pixy.y);
 }
 #endif
 

@@ -222,6 +222,49 @@ static void Log_Write_Current()
     DataFlash.Log_Write_Power();
 }
 
+struct PACKED log_Pixy {
+    LOG_PACKET_HEADER;
+    int16_t signature;
+    int16_t center_x;
+    int16_t center_y;
+    int16_t width;
+    int16_t height;  
+};
+
+/// Write a Pixy packet
+static void Log_Write_Pixy(int16_t signature, int16_t center_x, int16_t center_y, int16_t width, int16_t height)
+{
+    struct log_Pixy pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_PIXY_MSG),
+        signature         : signature,
+        center_x          : center_x,
+        center_y          : center_y,
+        width             : width,
+        height            : height
+    };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}
+
+struct PACKED log_airspeed {
+    LOG_PACKET_HEADER;
+    float air_speed;
+    float raw_airspeed;
+    float temperature;
+    float airspeed_ratio;
+};
+
+static void Log_Write_Airspeed(float air_speed, float raw_airspeed, float temperature, float airspeed_ratio)
+{
+    struct log_airspeed pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_AIRSPEED_MSG),
+        air_speed : air_speed,
+        raw_airspeed : raw_airspeed,
+        temperature : temperature,
+        airspeed_ratio : airspeed_ratio
+    };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}
+
 struct PACKED log_Optflow {
     LOG_PACKET_HEADER;
     uint32_t time_ms;
@@ -674,6 +717,10 @@ static const struct LogStructure log_structure[] PROGMEM = {
       "DFLT",  "Bf",         "Id,Value" },
     { LOG_ERROR_MSG, sizeof(log_Error),         
       "ERR",   "BB",         "Subsys,ECode" },
+    { LOG_PIXY_MSG, sizeof(log_Pixy),         
+      "PIXY",  "hhhhh",      "signature, center_x, center_y, width, height" },
+    { LOG_AIRSPEED_MSG, sizeof(log_airspeed),
+      "ASPD", "ffff",       "air, raw_air, air_ratio, temp"},
 };
 
 #if CLI_ENABLED == ENABLED
