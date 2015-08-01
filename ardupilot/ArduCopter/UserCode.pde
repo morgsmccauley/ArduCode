@@ -1,5 +1,28 @@
 /// -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
 
+#define XCENTRE 154.5f
+#define YCENTRE 101
+#define MXPIXCONV 0.0043f
+#define CXPIXCONV 0.00f
+#define MYPIXCONV 0.0042f
+#define CYPIXCONV 0.00f
+
+float model_X(int raw_x, int curr_alt)
+{
+    // Calculate corresponding Angle from centre of lens:
+    float obj_angle = MXPIXCONV * (raw_x - XCENTRE) + CXPIXCONV;
+    // Calculate lateral distance using depth and angle:
+    return (curr_alt * tan(obj_angle));
+}
+
+float model_Y(int raw_y, int curr_alt)
+{
+    // Calculate corresponding Angle from centre of lens:
+    float obj_angle = MYPIXCONV * (raw_y - YCENTRE) - CYPIXCONV;
+    // Calculate lateral distance using depth and angle:
+	return (curr_alt * tan(obj_angle));
+}
+
 #ifdef USERHOOK_INIT
 void userhook_init()
 {
