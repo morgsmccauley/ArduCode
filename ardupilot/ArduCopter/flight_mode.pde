@@ -70,7 +70,7 @@ static bool set_mode(uint8_t mode)
             break;
 
         case SPORT:
-            success = sport_init(ignore_checks);
+            success = pixycontrol_init(ignore_checks);
             break;
 
         case FLIP:
@@ -183,7 +183,7 @@ static void update_flight_mode()
             break;
 
         case SPORT:
-            sport_run();
+            pixycontrol_run();
             break;
 
         case FLIP:
@@ -344,7 +344,7 @@ print_flight_mode(AP_HAL::BetterStream *port, uint8_t mode)
         port->print_P(PSTR("DRIFT"));
         break;
     case SPORT:
-        port->print_P(PSTR("SPORT"));
+        port->print_P(PSTR("PIXY_CONTROL"));
         break;
     case FLIP:
         port->print_P(PSTR("FLIP"));
