@@ -14,6 +14,8 @@ int                 WiiDisplacementX=0;
 int                 WiiDisplacementY=0;
 #endif  // WII_CAMERA
 
+Vector2f pixy_error;
+
 #endif  // USERHOOK_VARIABLES
 
 

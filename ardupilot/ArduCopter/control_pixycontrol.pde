@@ -7,12 +7,14 @@
 // pixycontrol_init - initialise controller
 static bool pixycontrol_init(bool ignore_checks)
 {
+    if (true) {//position_ok() || optflow_position_ok() || ignore_checks) {
 
-    if (true) {						// Check for PIXY is Healthy - or ignore checks?
         // set target to current position
-        wp_nav.init_pixycontrol_target(pixy_error, true);		
+        Vector3f pixy_3f_error = {pixy_error.x, pixy_error.y, 0};
 
-        // initialize vertical speed and acceleration
+        wp_nav.init_loiter_target(pixy_3f_error, true);
+
+        // initialize vertical speed and accelerationj
         pos_control.set_speed_z(-g.pilot_velocity_z_max, g.pilot_velocity_z_max);
         pos_control.set_accel_z(g.pilot_accel_z);
 
@@ -31,20 +33,17 @@ static void pixycontrol_run()
 {
     float target_yaw_rate = 0;
     float target_climb_rate = 0;
+    float takeoff_climb_rate = 0.0f;
 
     /*
-    // if not auto armed set throttle to zero and exit immediately
-    if(!ap.auto_armed || !inertial_nav.position_ok()) {     // REMOVE INERTIAL NAV AS IT RELIES ON GPS
-        // set target to current position
-        wp_nav.init_pixycontrol_target(pixy_error, true);
-		
-        attitude_control.relax_bf_rate_controller();
-        attitude_control.set_yaw_target_to_current_heading();
-        attitude_control.set_throttle_out(0, false);
-        pos_control.set_alt_target_to_current_alt();
+    // if not auto armed or motor interlock not enabled set throttle to zero and exit immediately
+    if(!ap.auto_armed || !motors.get_interlock()) {
+        wp_nav.init_loiter_target();
+        attitude_control.set_throttle_out_unstabilized(0,true,g.throttle_filt);
+        pos_control.relax_alt_hold_controllers(get_throttle_pre_takeoff(g.rc_3.control_in)-throttle_average);
         return;
-    }*/
-    
+    }
+    */
 
     // process pilot inputs
     if (!failsafe.radio) {
@@ -59,9 +58,17 @@ static void pixycontrol_run()
 
         // get pilot desired climb rate
         target_climb_rate = get_pilot_desired_climb_rate(g.rc_3.control_in);
+        target_climb_rate = constrain_float(target_climb_rate, -g.pilot_velocity_z_max, g.pilot_velocity_z_max);
 
-        // check for pilot requested take-off
-        if (ap.land_complete && target_climb_rate > 0) {
+        // get takeoff adjusted pilot and takeoff climb rates
+        takeoff_get_climb_rates(target_climb_rate, takeoff_climb_rate);
+
+        // check for take-off
+        if (ap.land_complete && (takeoff_state.running || g.rc_3.control_in > get_takeoff_trigger_throttle())) {
+            if (!takeoff_state.running) {
+                takeoff_timer_start(constrain_float(g.pilot_takeoff_alt,0.0f,1000.0f));
+            }
+
             // indicate we are taking off
             set_land_complete(false);
             // clear i term when we're taking off
@@ -72,23 +79,40 @@ static void pixycontrol_run()
         wp_nav.clear_pilot_desired_acceleration();
     }
 
-	// Have removed checks for land complete / maybe landed, should not be landing in this mode
-
-    // run loiter controller
-	wp_nav.update_pixycontrol(pixy_error);
-
-    // call attitude controller
-    attitude_control.angle_ef_roll_pitch_rate_ef_yaw(wp_nav.get_roll(), wp_nav.get_pitch(), target_yaw_rate);
-
-    // body-frame rate controller is run directly from 100hz loop
-
-    // run altitude controller
-    if (sonar_alt_health >= SONAR_ALT_HEALTH_MAX) {
-        // if sonar is ok, use surface tracking
-        target_climb_rate = get_throttle_surface_tracking(target_climb_rate, pos_control.get_alt_target(), G_Dt);
+    /*
+    // relax loiter target if we might be landed
+    if (land_complete_maybe()) {
+        wp_nav.loiter_soften_for_landing();
     }
+    */
 
-    // update altitude target and call position controller
-    pos_control.set_alt_target_from_climb_rate(target_climb_rate, G_Dt);
-    pos_control.update_z_controller();
+    // when landed reset targets and output zero throttle
+    if (false) {//ap.land_complete) {
+        Vector3f pixy_3f_error = {pixy_error.x, pixy_error.y, 0};
+
+        wp_nav.init_loiter_target(pixy_3f_error, true);
+
+        // move throttle to between minimum and non-takeoff-throttle to keep us on the ground
+        attitude_control.set_throttle_out_unstabilized(get_throttle_pre_takeoff(g.rc_3.control_in),true,g.throttle_filt);
+        pos_control.relax_alt_hold_controllers(get_throttle_pre_takeoff(g.rc_3.control_in)-throttle_average);
+    }else{
+        // run loiter controller
+        wp_nav.update_pixy_loiter(ekfGndSpdLimit, ekfNavVelGainScaler, pixy_error);
+
+        // call attitude controller
+        attitude_control.angle_ef_roll_pitch_rate_ef_yaw(wp_nav.get_roll(), wp_nav.get_pitch(), target_yaw_rate);
+
+        // body-frame rate controller is run directly from 100hz loop
+
+        // run altitude controller
+        if (sonar_alt_health >= SONAR_ALT_HEALTH_MAX) {
+            // if sonar is ok, use surface tracking
+            target_climb_rate = get_surface_tracking_climb_rate(target_climb_rate, pos_control.get_alt_target(), G_Dt);
+        }
+
+        // update altitude target and call position controller
+        pos_control.set_alt_target_from_climb_rate(target_climb_rate, G_Dt);
+        pos_control.add_takeoff_climb_rate(takeoff_climb_rate, G_Dt);
+        pos_control.update_z_controller();
+    }
 }

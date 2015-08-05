@@ -144,7 +144,7 @@ void AC_WPNav::init_loiter_target(const Vector3f& position, bool reset_I)
     _pos_control.set_accel_xy(_loiter_accel_cmss);
 
     // set target position
-    _pos_control.set_xy_target(position.x, position.y);
+    _pos_control.set_pixy_target(position.x, position.y);
 
     // initialise feed forward velocity to zero
     _pos_control.set_desired_velocity_xy(0,0);
@@ -306,6 +306,32 @@ void AC_WPNav::update_loiter(float ekfGndSpdLimit, float ekfNavVelGainScaler)
         }
         calc_loiter_desired_velocity(dt,ekfGndSpdLimit);
         _pos_control.update_xy_controller(AC_PosControl::XY_MODE_POS_LIMITED_AND_VEL_FF, ekfNavVelGainScaler);
+    }
+}
+
+// update_loiter - run the loiter controller - gets called at 100hz (APM) or 400hz (PX4)
+void AC_WPNav::update_pixy_loiter(float ekfGndSpdLimit, float ekfNavVelGainScaler, Vector2f pixy_pos_error)
+{
+    // calculate dt
+    float dt = _pos_control.time_since_last_xy_update();
+
+    Vector2f pixy_latlon;
+
+    pixy_latlon.x = pixy_pos_error.x*_ahrs.cos_yaw() - pixy_pos_error.y*_ahrs.sin_yaw();
+    pixy_latlon.y = pixy_pos_error.x*_ahrs.sin_yaw() + pixy_pos_error.y*_ahrs.cos_yaw();
+
+    // run at poscontrol update rate.
+    // TODO: run on user input to reduce latency, maybe if (user_input || dt >= _pos_control.get_dt_xy())
+    if (dt >= _pos_control.get_dt_xy()) {
+        // sanity check dt
+        if (dt >= 0.2f) {
+            dt = 0.0f;
+        }
+        calc_loiter_desired_velocity(dt,ekfGndSpdLimit);
+
+        _pos_control.set_pixy_target(pixy_latlon.x, pixy_latlon.y);
+
+        _pos_control.update_pixy_controller(AC_PosControl::XY_MODE_POS_LIMITED_AND_VEL_FF, ekfNavVelGainScaler);
     }
 }
 

@@ -472,6 +472,13 @@ void AC_PosControl::set_xy_target(float x, float y)
     _pos_target.y = y;
 }
 
+/// set_xy_target in cm from home
+void AC_PosControl::set_pixy_target(float x, float y)
+{
+    _pos_target_rel.x = x;
+    _pos_target_rel.y = y;
+}
+
 /// set_target_to_stopping_point_xy - sets horizontal target to reasonable stopping position in cm from home
 void AC_PosControl::set_target_to_stopping_point_xy()
 {
@@ -579,7 +586,7 @@ void AC_PosControl::update_xy_controller(xy_mode mode, float ekfNavVelGainScaler
     }
 
     // check if xy leash needs to be recalculated
-    calc_leash_length_xy();
+    //calc_leash_length_xy();
 
     // translate any adjustments from pilot to loiter target
     desired_vel_to_pos(dt);
@@ -589,6 +596,29 @@ void AC_PosControl::update_xy_controller(xy_mode mode, float ekfNavVelGainScaler
 
     // run position controller's velocity to acceleration step
     rate_to_accel_xy(dt, ekfNavVelGainScaler);
+
+    // run position controller's acceleration to lean angle step
+    accel_to_lean_angles(dt, ekfNavVelGainScaler);
+}
+
+/// update_xy_controller - run the horizontal position controller - should be called at 100hz or higher
+void AC_PosControl::update_pixy_controller(xy_mode mode, float ekfNavVelGainScaler)
+{
+    // compute dt
+    uint32_t now = hal.scheduler->millis();
+    float dt = (now - _last_update_xy_ms) / 1000.0f;
+    _last_update_xy_ms = now;
+
+    // sanity check dt - expect to be called faster than ~5hz
+    if (dt > POSCONTROL_ACTIVE_TIMEOUT_MS*1.0e-3f) {
+        dt = 0.0f;
+    }
+
+    // run position controller's position error to desired velocity step
+    pos_to_rate_pixy(mode, dt, ekfNavVelGainScaler);
+
+    // run position controller's velocity to acceleration step
+    rate_to_accel_pixy(dt, ekfNavVelGainScaler);
 
     // run position controller's acceleration to lean angle step
     accel_to_lean_angles(dt, ekfNavVelGainScaler);
@@ -716,6 +746,7 @@ void AC_PosControl::pos_to_rate_xy(xy_mode mode, float dt, float ekfNavVelGainSc
         _pos_error.x = _pos_target.x - curr_pos.x;
         _pos_error.y = _pos_target.y - curr_pos.y;
 
+        
         // constrain target position to within reasonable distance of current location
         _distance_to_target = pythagorous2(_pos_error.x, _pos_error.y);
         if (_distance_to_target > _leash && _distance_to_target > 0.0f) {
@@ -726,6 +757,72 @@ void AC_PosControl::pos_to_rate_xy(xy_mode mode, float dt, float ekfNavVelGainSc
             _pos_error.y = _pos_target.y - curr_pos.y;
             _distance_to_target = _leash;
         }
+        
+
+        // calculate the distance at which we swap between linear and sqrt velocity response
+        linear_distance = _accel_cms/(2.0f*kP*kP);
+
+        if (_distance_to_target > 2.0f*linear_distance) {
+            // velocity response grows with the square root of the distance
+            float vel_sqrt = safe_sqrt(2.0f*_accel_cms*(_distance_to_target-linear_distance));
+            _vel_target.x = vel_sqrt * _pos_error.x/_distance_to_target;
+            _vel_target.y = vel_sqrt * _pos_error.y/_distance_to_target;
+        }else{
+            // velocity response grows linearly with the distance
+            _vel_target.x = _p_pos_xy.kP() * _pos_error.x;
+            _vel_target.y = _p_pos_xy.kP() * _pos_error.y;
+        }
+
+        if (mode == XY_MODE_POS_LIMITED_AND_VEL_FF) {
+            // this mode is for loiter - rate-limiting the position correction
+            // allows the pilot to always override the position correction in
+            // the event of a disturbance
+
+            // scale velocity within limit
+            float vel_total = pythagorous2(_vel_target.x, _vel_target.y);
+            if (vel_total > POSCONTROL_VEL_XY_MAX_FROM_POS_ERR) {
+                _vel_target.x = POSCONTROL_VEL_XY_MAX_FROM_POS_ERR * _vel_target.x/vel_total;
+                _vel_target.y = POSCONTROL_VEL_XY_MAX_FROM_POS_ERR * _vel_target.y/vel_total;
+            }
+
+            // add velocity feed-forward
+            _vel_target.x += _vel_desired.x;
+            _vel_target.y += _vel_desired.y;
+        } else {
+            if (mode == XY_MODE_POS_AND_VEL_FF) {
+                // add velocity feed-forward
+                _vel_target.x += _vel_desired.x;
+                _vel_target.y += _vel_desired.y;
+            }
+
+            // scale velocity within speed limit
+            float vel_total = pythagorous2(_vel_target.x, _vel_target.y);
+            if (vel_total > _speed_cms) {
+                _vel_target.x = _speed_cms * _vel_target.x/vel_total;
+                _vel_target.y = _speed_cms * _vel_target.y/vel_total;
+            }
+        }
+    }
+}
+
+/// pos_to_rate_xy - horizontal position error to velocity controller
+///     converts position (_pos_target) to target velocity (_vel_target)
+///     when use_desired_rate is set to true:
+///         desired velocity (_vel_desired) is combined into final target velocity and
+///         velocity due to position error is reduce to a maximum of 1m/s
+void AC_PosControl::pos_to_rate_pixy(xy_mode mode, float dt, float ekfNavVelGainScaler)
+{
+    float linear_distance;      // the distance we swap between linear and sqrt velocity response
+    float kP = ekfNavVelGainScaler * _p_pos_xy.kP(); // scale gains to compensate for noisy optical flow measurement in the EKF
+
+    // avoid divide by zero
+    if (kP <= 0.0f) {
+        _vel_target.x = 0.0f;
+        _vel_target.y = 0.0f;
+    }else{
+        // calculate distance error
+        _pos_error.x = _pos_target_rel.x;
+        _pos_error.y = _pos_target_rel.y;
 
         // calculate the distance at which we swap between linear and sqrt velocity response
         linear_distance = _accel_cms/(2.0f*kP*kP);
@@ -809,6 +906,72 @@ void AC_PosControl::rate_to_accel_xy(float dt, float ekfNavVelGainScaler)
     // calculate velocity error
     _vel_error.x = _vel_target.x - vel_curr.x;
     _vel_error.y = _vel_target.y - vel_curr.y;
+
+    // call pi controller
+    _pi_vel_xy.set_input(_vel_error);
+
+    // get p
+    vel_xy_p = _pi_vel_xy.get_p();
+
+    // update i term if we have not hit the accel or throttle limits OR the i term will reduce
+    if ((!_limit.accel_xy && !_motors.limit.throttle_upper)) {
+        vel_xy_i = _pi_vel_xy.get_i();
+    } else {
+        vel_xy_i = _pi_vel_xy.get_i_shrink();
+    }
+
+    // combine feed forward accel with PID output from velocity error and scale PID output to compensate for optical flow measurement induced EKF noise
+    _accel_target.x = _accel_feedforward.x + (vel_xy_p.x + vel_xy_i.x) * ekfNavVelGainScaler;
+    _accel_target.y = _accel_feedforward.y + (vel_xy_p.y + vel_xy_i.y) * ekfNavVelGainScaler;
+
+    // scale desired acceleration if it's beyond acceptable limit
+    // To-Do: move this check down to the accel_to_lean_angle method?
+    accel_total = pythagorous2(_accel_target.x, _accel_target.y);
+    if (accel_total > POSCONTROL_ACCEL_XY_MAX && accel_total > 0.0f) {
+        _accel_target.x = POSCONTROL_ACCEL_XY_MAX * _accel_target.x/accel_total;
+        _accel_target.y = POSCONTROL_ACCEL_XY_MAX * _accel_target.y/accel_total;
+        _limit.accel_xy = true;     // unused
+    } else {
+        // reset accel limit flag
+        _limit.accel_xy = false;
+    }
+}
+
+/// rate_to_accel_xy - horizontal desired rate to desired acceleration
+///    converts desired velocities in lat/lon directions to accelerations in lat/lon frame
+void AC_PosControl::rate_to_accel_pixy(float dt, float ekfNavVelGainScaler)
+{
+    float accel_total;                          // total acceleration in cm/s/s
+    Vector2f vel_xy_p, vel_xy_i;
+
+    // reset last velocity target to current target
+    if (_flags.reset_rate_to_accel_xy) {
+        _vel_last.x = _vel_target.x;
+        _vel_last.y = _vel_target.y;
+        _flags.reset_rate_to_accel_xy = false;
+    }
+
+    // feed forward desired acceleration calculation
+    if (dt > 0.0f) {
+        if (!_flags.freeze_ff_xy) {
+            _accel_feedforward.x = (_vel_target.x - _vel_last.x)/dt;
+            _accel_feedforward.y = (_vel_target.y - _vel_last.y)/dt;
+        } else {
+            // stop the feed forward being calculated during a known discontinuity
+            _flags.freeze_ff_xy = false;
+        }
+    } else {
+        _accel_feedforward.x = 0.0f;
+        _accel_feedforward.y = 0.0f;
+    }
+
+    // store this iteration's velocities for the next iteration
+    _vel_last.x = _vel_target.x;
+    _vel_last.y = _vel_target.y;
+
+    // calculate velocity error
+    _vel_error.x = _vel_target.x;
+    _vel_error.y = _vel_target.y;
 
     // call pi controller
     _pi_vel_xy.set_input(_vel_error);

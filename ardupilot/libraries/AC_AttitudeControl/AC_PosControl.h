@@ -197,6 +197,9 @@ public:
     /// set_xy_target in cm from home
     void set_xy_target(float x, float y);
 
+    /// set_xy_target in cm from home
+    void set_pixy_target(float x, float y);
+
     /// get_desired_velocity - returns xy desired velocity (i.e. feed forward) in cm/s in lat and lon direction
     const Vector3f& get_desired_velocity() { return _vel_desired; }
 
@@ -221,6 +224,8 @@ public:
     /// update_xy_controller - run the horizontal position controller - should be called at 100hz or higher
     ///     when use_desired_velocity is true the desired velocity (i.e. feed forward) is incorporated at the pos_to_rate step
     void update_xy_controller(xy_mode mode, float ekfNavVelGainScaler);
+
+    void update_pixy_controller(xy_mode mode, float ekfNavVelGainScaler);
 
     /// set_target_to_stopping_point_xy - sets horizontal target to reasonable stopping position in cm from home
     void set_target_to_stopping_point_xy();
@@ -326,9 +331,13 @@ private:
     ///         velocity due to position error is reduce to a maximum of 1m/s
     void pos_to_rate_xy(xy_mode mode, float dt, float ekfNavVelGainScaler);
 
+    void pos_to_rate_pixy(xy_mode mode, float dt, float ekfNavVelGainScaler);
+
     /// rate_to_accel_xy - horizontal desired rate to desired acceleration
     ///    converts desired velocities in lat/lon directions to accelerations in lat/lon frame
     void rate_to_accel_xy(float dt, float ekfNavVelGainScaler);
+
+    void rate_to_accel_pixy(float dt, float ekfNavVelGainScaler);
 
     /// accel_to_lean_angles - horizontal desired acceleration to lean angles
     ///    converts desired accelerations provided in lat/lon frame to roll/pitch angles
@@ -375,6 +384,7 @@ private:
 
     // position controller internal variables
     Vector3f    _pos_target;            // target location in cm from home
+    Vector3f    _pos_target_rel;
     Vector3f    _pos_error;             // error between desired and actual position in cm
     Vector3f    _vel_desired;           // desired velocity in cm/s
     Vector3f    _vel_target;            // velocity target in cm/s calculated by pos_to_rate step

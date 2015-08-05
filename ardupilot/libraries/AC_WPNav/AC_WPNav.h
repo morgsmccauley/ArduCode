@@ -94,6 +94,9 @@ public:
     /// update_loiter - run the loiter controller - should be called at 10hz
     void update_loiter(float ekfGndSpdLimit, float ekfNavVelGainScaler);
 
+    //pixy loiter
+    void update_pixy_loiter(float ekfGndSpdLimit, float ekfNavVelGainScaler, Vector2f pixy_pos_error);
+
     ///
     /// stop controller
     ///

@@ -6,6 +6,7 @@
 #define CXPIXCONV 0.00f
 #define MYPIXCONV 0.0042f
 #define CYPIXCONV 0.00f
+#define INTERNALKP 5.0f
 
 float model_X(int raw_x, int curr_alt)
 {
@@ -29,8 +30,8 @@ void userhook_init()
     // put your initialisation code here
     // this will be called once at start-up
 
-    airspeed.init();
-    airspeed.calibrate(false);
+    //airspeed.init();
+    //airspeed.calibrate(false);
 }
 #endif
 
@@ -45,16 +46,31 @@ void userhook_FastLoop()
 void userhook_50Hz()
 {
     // put your 50Hz code here
-    update_irlock();
-    airspeed.read();
+    Vector2f raw_pixy_error = update_irlock(1);
+
+    //convert pixels to cms
+
+    if (!(raw_pixy_error.x == 0 && raw_pixy_error.y == 0))
+    {
+        pixy_error.x = model_X(raw_pixy_error.x, 150) * INTERNALKP;
+        pixy_error.y = model_Y(raw_pixy_error.y, 150) * INTERNALKP;   
+    }
+    else
+    {
+        pixy_error.x = 0;
+        pixy_error.y = 0;
+    }
+
+
+    //airspeed.read();
 
     float temp = 0;
-    airspeed.get_temperature(temp);
+    //airspeed.get_temperature(temp);
 
-    Log_Write_Airspeed(airspeed.get_airspeed(), airspeed.get_raw_airspeed(), airspeed.get_airspeed_ratio(), temp);
+    //Log_Write_Airspeed(airspeed.get_airspeed(), airspeed.get_raw_airspeed(), airspeed.get_airspeed_ratio(), temp);
 
     //hal.console->printf_P(PSTR("airspeed: %f"), airspeed.get_airspeed());
-    //hal.console->printf_P(PSTR("pixy: %f, %f"), pixy.x, pixy.y);
+    //hal.console->printf_P(PSTR("x: %f, y: %f\n"), pixy_error.x, pixy_error.y);
 }
 #endif
 

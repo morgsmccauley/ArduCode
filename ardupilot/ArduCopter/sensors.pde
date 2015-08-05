@@ -110,13 +110,13 @@ static void init_irlock()
 
 // update the irlock sensor
 #if IRLOCK == ENABLED
-static void update_irlock(void)
+static Vector2f update_irlock(uint16_t signature)
 {
     static uint32_t last_of_update = 0;
     Vector2f pixy;
 
     if (!irlock.enabled())
-        return;
+        return pixy;
 
     irlock.update();
     
@@ -136,12 +136,17 @@ static void update_irlock(void)
         for (int i = 0; (int)i < (int)irlock.num_blocks(); ++i) {
             // cliSerial->printf_P(PSTR("sig# %u at position (x=%u, y=%u) with (w=%u, h=%u)\n"),
             //      frame[i].signature, frame[i].center_x, frame[i].center_y, frame[i].width, frame[i].height);
+            if (signature == frame[i].signature){
+                pixy.x = frame[i].center_x;
+                pixy.y = frame[i].center_y;
+            }
+
             Log_Write_Pixy(frame[i].signature, (frame[i].center_x - 155.0f), (frame[i].center_y - 101.0f), frame[i].width, frame[i].height);
             //pixy = {frame[i].center_x, frame[i].center_y};
         }
     }
 
-    return;
+    return pixy;
 }
 #endif
 
