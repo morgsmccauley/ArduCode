@@ -310,14 +310,14 @@ static void NOINLINE send_nav_controller_output(mavlink_channel_t chan)
     const Vector3f &targets = attitude_control.angle_ef_targets();
     mavlink_msg_nav_controller_output_send(
         chan,
-        targets.x / 1.0e2f,
-        targets.y / 1.0e2f,
-        targets.z / 1.0e2f,
-        wp_bearing / 1.0e2f,
-        wp_distance / 1.0e2f,
-        pos_control.get_alt_error() / 1.0e2f,
-        0,
-        0);
+        airspeed.get_airspeed(), //targets.x / 1.0e2f,
+        airspeed.get_raw_airspeed(), //targets.y / 1.0e2f,
+        airspeed.get_airspeed_ratio(), //targets.z / 1.0e2f,
+        100,//wp_bearing / 1.0e2f,
+        200,//wp_distance / 1.0e2f,
+        300,//pos_control.get_alt_error() / 1.0e2f,
+        400,
+        500);
 }
 
 // report simulator state
