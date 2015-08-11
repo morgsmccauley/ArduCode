@@ -265,6 +265,22 @@ static void Log_Write_Airspeed(float air_speed, float raw_airspeed, float temper
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
 
+struct PACKED log_sonar {
+    LOG_PACKET_HEADER;
+    float distance;
+    float voltage;
+};
+
+static void Log_Write_Sonar(float distance, float voltage)
+{
+    struct log_sonar pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_SONAR_MSG),
+        distance : distance,
+        voltage : voltage,
+    };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}
+
 struct PACKED log_Optflow {
     LOG_PACKET_HEADER;
     uint32_t time_ms;
@@ -721,6 +737,8 @@ static const struct LogStructure log_structure[] PROGMEM = {
       "PIXY",  "hhhhh",      "signature, center_x, center_y, width, height" },
     { LOG_AIRSPEED_MSG, sizeof(log_airspeed),
       "ASPD", "ffff",       "air, raw_air, air_ratio, temp"},
+	{ LOG_SONAR_MSG, sizeof(log_sonar),
+      "SONR", "ff",       "dist, volt"},
 };
 
 #if CLI_ENABLED == ENABLED

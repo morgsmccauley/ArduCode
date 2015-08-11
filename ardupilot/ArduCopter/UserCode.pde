@@ -78,6 +78,7 @@ void userhook_50Hz()
 void userhook_MediumLoop()
 {
     // put your 10Hz code here
+	Log_Write_Sonar(sonar.distance_cm(), sonar.voltage_mv());
 }
 #endif
 
