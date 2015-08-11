@@ -572,6 +572,33 @@ void AC_PosControl::init_xy_controller(bool reset_I)
     _flags.reset_accel_to_lean_xy = true;
 }
 
+/// init_xy_controller - initialise the xy controller
+///     sets target roll angle, pitch angle and I terms based on vehicle current lean angles
+///     should be called once whenever significant changes to the position target are made
+///     this does not update the xy target
+void AC_PosControl::init_pixy_controller(bool reset_I)
+{
+    // set roll, pitch lean angle targets to current attitude
+    _roll_target = _ahrs.roll_sensor;
+    _pitch_target = _ahrs.pitch_sensor;
+
+    // initialise I terms from lean angles
+    if (reset_I) {
+        // reset last velocity if this controller has just been engaged or dt is zero
+        lean_angles_to_accel(_accel_target.x, _accel_target.y);
+        _pi_vel_xy.set_integrator(_accel_target);
+    }
+
+    _pixy_offset.x = 0;
+    _pixy_offset.y = 0;
+    _pixy_offset.z = 0;
+
+    // flag reset required in rate to accel step
+    _flags.reset_desired_vel_to_pos = true;
+    _flags.reset_rate_to_accel_xy = true;
+    _flags.reset_accel_to_lean_xy = true;
+}
+
 /// update_xy_controller - run the horizontal position controller - should be called at 100hz or higher
 void AC_PosControl::update_xy_controller(xy_mode mode, float ekfNavVelGainScaler)
 {
@@ -613,6 +640,9 @@ void AC_PosControl::update_pixy_controller(xy_mode mode, float ekfNavVelGainScal
     if (dt > POSCONTROL_ACTIVE_TIMEOUT_MS*1.0e-3f) {
         dt = 0.0f;
     }
+
+    // transfer pilot inputs to offset point
+    desired_vel_to_pixy(dt);
 
     // run position controller's position error to desired velocity step
     pos_to_rate_pixy(mode, dt, ekfNavVelGainScaler);
@@ -726,6 +756,25 @@ void AC_PosControl::desired_vel_to_pos(float nav_dt)
     }
 }
 
+/// desired_vel_to_pos - move position target using desired velocities
+void AC_PosControl::desired_vel_to_pixy(float nav_dt)
+{
+    // range check nav_dt
+    if( nav_dt < 0 ) {
+        return;
+    }
+
+    // update target position
+    if (_flags.reset_desired_vel_to_pos) {
+        _flags.reset_desired_vel_to_pos = false;
+    } else {
+        _pixy_offset.x += _vel_desired.x * nav_dt;
+        _pixy_offset.y += _vel_desired.y * nav_dt;
+    }
+
+    //hal.console->printf_P(PSTR("OFFSET: %f, %f"), _pixy_offset.x, _pixy_offset.y);
+}
+
 /// pos_to_rate_xy - horizontal position error to velocity controller
 ///     converts position (_pos_target) to target velocity (_vel_target)
 ///     when use_desired_rate is set to true:
@@ -821,8 +870,10 @@ void AC_PosControl::pos_to_rate_pixy(xy_mode mode, float dt, float ekfNavVelGain
         _vel_target.y = 0.0f;
     }else{
         // calculate distance error
-        _pos_error.x = _pos_target_rel.x;
-        _pos_error.y = _pos_target_rel.y;
+        _pos_error.x = _pos_target_rel.x + _pixy_offset.x;
+        _pos_error.y = _pos_target_rel.y + _pixy_offset.y;
+
+        hal.console->printf_P(PSTR("pixy: %f, %f"), _pos_error.x, _pos_error.y);
 
         // calculate the distance at which we swap between linear and sqrt velocity response
         linear_distance = _accel_cms/(2.0f*kP*kP);

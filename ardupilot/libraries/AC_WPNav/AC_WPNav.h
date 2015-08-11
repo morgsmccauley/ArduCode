@@ -67,6 +67,8 @@ public:
     ///     caller can set reset_I to false to preserve I term since previous time loiter controller ran.  Should only be false when caller is sure that not too much time has passed to invalidate the I terms
     void init_loiter_target(const Vector3f& position, bool reset_I=true);
 
+    void init_pixy_target(const Vector3f& position, bool reset_I);
+
     /// init_loiter_target - initialize's loiter position and feed-forward velocity from current pos and velocity
     void init_loiter_target();
 

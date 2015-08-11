@@ -158,6 +158,31 @@ void AC_WPNav::init_loiter_target(const Vector3f& position, bool reset_I)
     _pilot_accel_rgt_cms = 0;
 }
 
+/// init_loiter_target in cm from home
+void AC_WPNav::init_pixy_target(const Vector3f& position, bool reset_I)
+{
+    // initialise position controller
+    _pos_control.init_pixy_controller(reset_I);
+
+    // initialise pos controller speed and acceleration
+    _pos_control.set_speed_xy(_loiter_speed_cms);
+    _pos_control.set_accel_xy(_loiter_accel_cmss);
+
+    // set target position
+    _pos_control.set_pixy_target(position.x, position.y);
+
+    // initialise feed forward velocity to zero
+    _pos_control.set_desired_velocity_xy(0,0);
+
+    // initialise desired accel and add fake wind
+    _loiter_desired_accel.x = 0;
+    _loiter_desired_accel.y = 0;
+
+    // initialise pilot input
+    _pilot_accel_fwd_cms = 0;
+    _pilot_accel_rgt_cms = 0;
+}
+
 /// init_loiter_target - initialize's loiter position and feed-forward velocity from current pos and velocity
 void AC_WPNav::init_loiter_target()
 {
@@ -319,6 +344,8 @@ void AC_WPNav::update_pixy_loiter(float ekfGndSpdLimit, float ekfNavVelGainScale
 
     pixy_latlon.x = pixy_pos_error.x*_ahrs.cos_yaw() - pixy_pos_error.y*_ahrs.sin_yaw();
     pixy_latlon.y = pixy_pos_error.x*_ahrs.sin_yaw() + pixy_pos_error.y*_ahrs.cos_yaw();
+
+    //hal.console->printf_P(PSTR("X: %f, Y: %f\n"), pixy_pos_error.x, pixy_pos_error.y);
 
     // run at poscontrol update rate.
     // TODO: run on user input to reduce latency, maybe if (user_input || dt >= _pos_control.get_dt_xy())

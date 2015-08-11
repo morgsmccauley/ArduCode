@@ -12,7 +12,7 @@ static bool pixycontrol_init(bool ignore_checks)
         // set target to current position
         Vector3f pixy_3f_error = {pixy_error.x, pixy_error.y, 0};
 
-        wp_nav.init_loiter_target(pixy_3f_error, true);
+        wp_nav.init_pixy_target(pixy_3f_error, true);
 
         // initialize vertical speed and accelerationj
         pos_control.set_speed_z(-g.pilot_velocity_z_max, g.pilot_velocity_z_max);
@@ -90,7 +90,7 @@ static void pixycontrol_run()
     if (false) {//ap.land_complete) {
         Vector3f pixy_3f_error = {pixy_error.x, pixy_error.y, 0};
 
-        wp_nav.init_loiter_target(pixy_3f_error, true);
+        wp_nav.init_pixy_target(pixy_3f_error, true);
 
         // move throttle to between minimum and non-takeoff-throttle to keep us on the ground
         attitude_control.set_throttle_out_unstabilized(get_throttle_pre_takeoff(g.rc_3.control_in),true,g.throttle_filt);

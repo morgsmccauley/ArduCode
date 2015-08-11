@@ -174,6 +174,8 @@ public:
     ///     this does not update the xy target
     void init_xy_controller(bool reset_I = true);
 
+    void init_pixy_controller(bool reset_I = true);
+
     /// set_accel_xy - set horizontal acceleration in cm/s/s
     ///     leash length will be recalculated the next time update_xy_controller() is called
     void set_accel_xy(float accel_cmss);
@@ -324,6 +326,8 @@ private:
     /// desired_vel_to_pos - move position target using desired velocities
     void desired_vel_to_pos(float nav_dt);
 
+    void desired_vel_to_pixy(float nav_dt);
+
     /// pos_to_rate_xy - horizontal position error to velocity controller
     ///     converts position (_pos_target) to target velocity (_vel_target)
     ///     when use_desired_rate is set to true:
@@ -385,6 +389,7 @@ private:
     // position controller internal variables
     Vector3f    _pos_target;            // target location in cm from home
     Vector3f    _pos_target_rel;
+    Vector3f    _pixy_offset;
     Vector3f    _pos_error;             // error between desired and actual position in cm
     Vector3f    _vel_desired;           // desired velocity in cm/s
     Vector3f    _vel_target;            // velocity target in cm/s calculated by pos_to_rate step
