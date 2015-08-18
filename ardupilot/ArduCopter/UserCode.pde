@@ -54,8 +54,8 @@ void userhook_50Hz()
 
     if (!(raw_pixy_error.x == 0 && raw_pixy_error.y == 0))
     {
-        pixy_error.x = model_X(raw_pixy_error.x, sonar.distance_cm());
-        pixy_error.y = model_Y(raw_pixy_error.y, sonar.distance_cm());   
+        pixy_error.x = model_X(raw_pixy_error.x, 150);
+        pixy_error.y = model_Y(raw_pixy_error.y, 150);   
     }
     else
     {
@@ -80,7 +80,11 @@ void userhook_50Hz()
 void userhook_MediumLoop()
 {
     // put your 10Hz code here
-	Log_Write_Sonar(sonar.distance_cm(), sonar.voltage_mv());
+	//Log_Write_Sonar((sonar.distance_cm() / 100.0f), sonar.voltage_mv());
+
+    if(relay.enabled(55) == true){
+        relay.on(55);
+    }
 }
 #endif
 

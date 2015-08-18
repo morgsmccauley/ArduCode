@@ -642,7 +642,7 @@ void AC_PosControl::update_pixy_controller(xy_mode mode, float ekfNavVelGainScal
     }
 
     // transfer pilot inputs to offset point
-    desired_vel_to_pixy(dt);
+    //desired_vel_to_pixy(dt);
 
     // run position controller's position error to desired velocity step
     pos_to_rate_pixy(mode, dt, ekfNavVelGainScaler);
@@ -768,8 +768,8 @@ void AC_PosControl::desired_vel_to_pixy(float nav_dt)
     if (_flags.reset_desired_vel_to_pos) {
         _flags.reset_desired_vel_to_pos = false;
     } else {
-        _pixy_offset.x += _vel_desired.x * nav_dt;
-        _pixy_offset.y += _vel_desired.y * nav_dt;
+        _pixy_offset.x -= (_vel_desired.x * nav_dt / 5.0f);
+        _pixy_offset.y -= (_vel_desired.y * nav_dt / 5.0f);
     }
 
     //hal.console->printf_P(PSTR("OFFSET: %f, %f"), _pixy_offset.x, _pixy_offset.y);
@@ -870,8 +870,17 @@ void AC_PosControl::pos_to_rate_pixy(xy_mode mode, float dt, float ekfNavVelGain
         _vel_target.y = 0.0f;
     }else{
         // calculate distance error
-        _pos_error.x = _pos_target_rel.x + _pixy_offset.x;
-        _pos_error.y = _pos_target_rel.y + _pixy_offset.y;
+        if(!(_pos_target_rel.x == 0 && _pos_target_rel.y == 0))
+        {
+            _pos_error.x = _pos_target_rel.x - _pixy_offset.x;
+            _pos_error.y = _pos_target_rel.y - _pixy_offset.y;
+        }
+        else
+        {
+            _pos_error.x = 0;
+            _pos_error.y = 0;
+        }
+
 
         hal.console->printf_P(PSTR("pixy: %f, %f"), _pos_error.x, _pos_error.y);
 

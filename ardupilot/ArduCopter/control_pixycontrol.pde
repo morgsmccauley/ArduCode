@@ -76,7 +76,7 @@ static void pixycontrol_run()
         }
     } else {
         // clear out pilot desired acceleration in case radio failsafe event occurs and we do not switch to RTL for some reason
-        wp_nav.clear_pilot_desired_acceleration();
+        //wp_nav.clear_pilot_desired_acceleration();
     }
 
     /*
