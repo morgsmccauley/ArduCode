@@ -50,11 +50,19 @@ void userhook_50Hz()
 {
     // put your 50Hz code here
     Vector2f raw_pixy_error = update_irlock(1);
+	
+	// Filter Reading
+	rw_px_err_prv = rw_px_err_fil;
+	rw_px_err_fil.x = (TAU * rw_px_err_prv.x + TK * raw_pixy_error.x) / (TAU + TK);
+	rw_px_err_fil.y = (TAU * rw_px_err_prv.y + TK * raw_pixy_error.y) / (TAU + TK);
 
     //convert pixels to cms
 
     //hal.console->printf_P(PSTR("sonar: %d\n"), sonar.distance_cm());
 
+	// Need to Change to include filtered error
+	// - If statement should check current filtered and prev == 00
+	// - Filtered should be used in model
     if (!(raw_pixy_error.x == 0 && raw_pixy_error.y == 0))
     {
         pixy_error.x = model_X(raw_pixy_error.x, 150);

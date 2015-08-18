@@ -140,8 +140,9 @@ static Vector2f update_irlock(uint16_t signature)
                 pixy.x = frame[i].center_x;
                 pixy.y = frame[i].center_y;
             }
-
-            Log_Write_Pixy(frame[i].signature, (frame[i].center_x - 155.0f), (frame[i].center_y - 101.0f), frame[i].width, frame[i].height);
+	
+			Log_Write_Pixy(frame[i].signature, frame[i].center_x, frame[i].center_y, frame[i].width, frame[i].height, rw_px_err_fil.x, rw_px_err_fil.y);
+            //Log_Write_Pixy(frame[i].signature, (frame[i].center_x - 155.0f), (frame[i].center_y - 101.0f), frame[i].width, frame[i].height);
             //pixy = {frame[i].center_x, frame[i].center_y};
         }
     }

@@ -19,6 +19,10 @@ Vector2f pixy_error;
 uint16_t sonar_distcm = 0;
 uint16_t sonar_distcm_prv = 0;
 
+// Pixy Filtering Variables
+Vector2f rw_px_err_prv;
+Vector2f rw_px_err_fil;
+
 #endif  // USERHOOK_VARIABLES
 
 

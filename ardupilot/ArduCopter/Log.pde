@@ -228,11 +228,13 @@ struct PACKED log_Pixy {
     int16_t center_x;
     int16_t center_y;
     int16_t width;
-    int16_t height;  
+    int16_t height; 
+	float fil_x;
+    float fil_y;
 };
 
 /// Write a Pixy packet
-static void Log_Write_Pixy(int16_t signature, int16_t center_x, int16_t center_y, int16_t width, int16_t height)
+static void Log_Write_Pixy(int16_t signature, int16_t center_x, int16_t center_y, int16_t width, int16_t height, float fil_x, float fil_y)
 {
     struct log_Pixy pkt = {
         LOG_PACKET_HEADER_INIT(LOG_PIXY_MSG),
@@ -240,7 +242,9 @@ static void Log_Write_Pixy(int16_t signature, int16_t center_x, int16_t center_y
         center_x          : center_x,
         center_y          : center_y,
         width             : width,
-        height            : height
+        height            : height,
+		fil_x			  : fil_x,
+		fil_y			  : fil_y
     };
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
@@ -736,7 +740,7 @@ static const struct LogStructure log_structure[] PROGMEM = {
     { LOG_ERROR_MSG, sizeof(log_Error),         
       "ERR",   "BB",         "Subsys,ECode" },
     { LOG_PIXY_MSG, sizeof(log_Pixy),         
-      "PIXY",  "hhhhh",      "signature, center_x, center_y, width, height" },
+      "PIXY",  "hhhhhff",      "signature, center_x, center_y, width, height, filt_x, filt_y" },
     { LOG_AIRSPEED_MSG, sizeof(log_airspeed),
       "ASPD", "ffff",       "air, raw_air, air_ratio, temp"},
 	{ LOG_SONAR_MSG, sizeof(log_sonar),
