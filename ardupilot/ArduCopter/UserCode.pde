@@ -8,6 +8,9 @@
 #define CYPIXCONV 0.00f
 #define INTERNALKP 5.0f
 
+#define TAU 1.0f
+#define TK 0.1f
+
 float model_X(int raw_x, int curr_alt)
 {
     // Calculate corresponding Angle from centre of lens:
@@ -54,8 +57,8 @@ void userhook_50Hz()
 
     if (!(raw_pixy_error.x == 0 && raw_pixy_error.y == 0))
     {
-        pixy_error.x = model_X(raw_pixy_error.x, sonar.distance_cm());
-        pixy_error.y = model_Y(raw_pixy_error.y, sonar.distance_cm());   
+        pixy_error.x = model_X(raw_pixy_error.x, sonar_distcm);
+        pixy_error.y = model_Y(raw_pixy_error.y, sonar_distcm);   
     }
     else
     {
@@ -80,7 +83,11 @@ void userhook_50Hz()
 void userhook_MediumLoop()
 {
     // put your 10Hz code here
-	Log_Write_Sonar(sonar.distance_cm(), sonar.voltage_mv());
+	
+	// Read, Filter, & Log Sonar Data
+	sonar_distcm_prv = sonar_distcm;
+	sonar_distcm = (TAU * sonar_distcm_prv + TK * sonar.distance_cm()) / (TAU + TK);
+	Log_Write_Sonar(sonar_distcm, sonar.distance_cm(), sonar.voltage_mv());
 }
 #endif
 

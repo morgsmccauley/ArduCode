@@ -267,14 +267,16 @@ static void Log_Write_Airspeed(float air_speed, float raw_airspeed, float temper
 
 struct PACKED log_sonar {
     LOG_PACKET_HEADER;
+	float filt_dist;
     float distance;
     float voltage;
 };
 
-static void Log_Write_Sonar(float distance, float voltage)
+static void Log_Write_Sonar(float filt_dist, float distance, float voltage)
 {
     struct log_sonar pkt = {
         LOG_PACKET_HEADER_INIT(LOG_SONAR_MSG),
+	    filt_dist : filt_dist,
         distance : distance,
         voltage : voltage,
     };
