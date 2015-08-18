@@ -16,6 +16,9 @@ int                 WiiDisplacementY=0;
 
 Vector2f pixy_error;
 
+uint16_t sonar_distcm = 0;
+uint16_t sonar_distcm_prv = 0;
+
 #endif  // USERHOOK_VARIABLES
 
 
