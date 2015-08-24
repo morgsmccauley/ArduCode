@@ -55,15 +55,15 @@ void userhook_50Hz()
 
     hal.rcout->write(4, 0);
 	
-	
     //convert pixels to cms
 
     //hal.console->printf_P(PSTR("sonar: %d\n"), sonar.distance_cm());
 
-	// Need to Change to include filtered error
-	// - If statement should check current filtered and prev == 00
-	// - Filtered should be used in model
-	if (!(raw_pixy_error.x == 0 && raw_pixy_error.y == 0))
+	if (!update_error)
+	{
+		// DO NOTHING		
+	}
+	else if (!(raw_pixy_error.x == 0 && raw_pixy_error.y == 0))
     {
         pixy_error.x = model_X(raw_pixy_error.x, sonar_distcm);
         pixy_error.y = model_Y(raw_pixy_error.y, sonar_distcm);   
