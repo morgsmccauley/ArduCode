@@ -9,6 +9,7 @@
 
 #define TAU 1.0f
 #define TK 0.1f
+#define THRES 10
 
 float model_X(int raw_x, int curr_alt)
 {
@@ -54,11 +55,7 @@ void userhook_50Hz()
 
     hal.rcout->write(4, 0);
 	
-	// Filter Reading
-	rw_px_err_prv = rw_px_err_fil;
-	rw_px_err_fil.x = (TAU * rw_px_err_prv.x + TK * raw_pixy_error.x) / (TAU + TK);
-	rw_px_err_fil.y = (TAU * rw_px_err_prv.y + TK * raw_pixy_error.y) / (TAU + TK);
-
+	
     //convert pixels to cms
 
     //hal.console->printf_P(PSTR("sonar: %d\n"), sonar.distance_cm());
@@ -66,7 +63,7 @@ void userhook_50Hz()
 	// Need to Change to include filtered error
 	// - If statement should check current filtered and prev == 00
 	// - Filtered should be used in model
-    if (!(raw_pixy_error.x == 0 && raw_pixy_error.y == 0))
+	if (!(raw_pixy_error.x == 0 && raw_pixy_error.y == 0))
     {
         pixy_error.x = model_X(raw_pixy_error.x, sonar_distcm);
         pixy_error.y = model_Y(raw_pixy_error.y, sonar_distcm);   
@@ -102,9 +99,26 @@ void userhook_MediumLoop()
     }
 
 	// Read, Filter, & Log Sonar Data
+	sonar_distcm_prvB = sonar_distcm_prvA;
+	sonar_distcm_prvA = sonar_distcm_A;
+	
 	sonar_distcm_prv = sonar_distcm;
+	
+	// Low Pass Filter
 	sonar_distcm = (TAU * sonar_distcm_prv + TK * sonar.distance_cm()) / (TAU + TK);
-	Log_Write_Sonar(sonar_distcm, sonar.distance_cm(), sonar.voltage_mv());
+	
+	// Outlier Filter
+	if((sonar.distance_cm() > sonar_distance_prv + THRES) || (sonar.distance_cm() < sonar_distance_prv - THRES))
+	{
+        sonar_distcm_A = sonar_distcm_prvA + (sonar_distcm_prvA - sonar_distcm_prvB)/2;
+	}
+    else{
+        sonar_distcm_A = sonar.distance_cm();
+	}
+	
+	Log_Write_Sonar(sonar_distcm_A, sonar.distance_cm(), sonar.voltage_mv());
+	
+	sonar_distance_prv = sonar.distance_cm();
 }
 #endif
 

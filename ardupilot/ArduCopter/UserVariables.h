@@ -18,6 +18,10 @@ Vector2f pixy_error;
 
 uint16_t sonar_distcm = 0;
 uint16_t sonar_distcm_prv = 0;
+uint16_t sonar_distcm_prvB = 0;
+uint16_t sonar_distcm_prvA = 0;
+uint16_t sonar_distance_prv = 0;
+uint16_t sonar_distcm_A = 0;
 
 // Pixy Filtering Variables
 Vector2f rw_px_err_prv;
