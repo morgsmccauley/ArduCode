@@ -63,6 +63,7 @@ static void pixycontrol_run()
         // get takeoff adjusted pilot and takeoff climb rates
         takeoff_get_climb_rates(target_climb_rate, takeoff_climb_rate);
 
+        /*
         // check for take-off
         if (ap.land_complete && (takeoff_state.running || g.rc_3.control_in > get_takeoff_trigger_throttle())) {
             if (!takeoff_state.running) {
@@ -74,6 +75,7 @@ static void pixycontrol_run()
             // clear i term when we're taking off
             set_throttle_takeoff();
         }
+        */
     } else {
         // clear out pilot desired acceleration in case radio failsafe event occurs and we do not switch to RTL for some reason
         //wp_nav.clear_pilot_desired_acceleration();
@@ -88,6 +90,7 @@ static void pixycontrol_run()
 
     // when landed reset targets and output zero throttle
     if (false) {//ap.land_complete) {
+        /*
         Vector3f pixy_3f_error = {pixy_error.x, pixy_error.y, 0};
 
         wp_nav.init_pixy_target(pixy_3f_error, true);
@@ -95,6 +98,7 @@ static void pixycontrol_run()
         // move throttle to between minimum and non-takeoff-throttle to keep us on the ground
         attitude_control.set_throttle_out_unstabilized(get_throttle_pre_takeoff(g.rc_3.control_in),true,g.throttle_filt);
         pos_control.relax_alt_hold_controllers(get_throttle_pre_takeoff(g.rc_3.control_in)-throttle_average);
+        */
     }else{
         // run loiter controller
         wp_nav.update_pixy_loiter(ekfGndSpdLimit, ekfNavVelGainScaler, pixy_error);

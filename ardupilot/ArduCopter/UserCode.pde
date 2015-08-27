@@ -6,7 +6,6 @@
 #define CXPIXCONV 0.00f
 #define MYPIXCONV 0.0042f
 #define CYPIXCONV 0.00f
-#define INTERNALKP 5.0f
 
 #define TAU 1.0f
 #define TK 0.1f
@@ -35,6 +34,8 @@ void userhook_init()
 
     //airspeed.init();
     //airspeed.calibrate(false);
+
+    hal.rcout->enable_ch(5);
 }
 #endif
 
@@ -50,6 +51,8 @@ void userhook_50Hz()
 {
     // put your 50Hz code here
     Vector2f raw_pixy_error = update_irlock(1);
+
+    hal.rcout->write(4, 0);
 	
 	// Filter Reading
 	rw_px_err_prv = rw_px_err_fil;
@@ -65,8 +68,8 @@ void userhook_50Hz()
 	// - Filtered should be used in model
     if (!(raw_pixy_error.x == 0 && raw_pixy_error.y == 0))
     {
-        pixy_error.x = model_X(raw_pixy_error.x, 150);
-        pixy_error.y = model_Y(raw_pixy_error.y, 150);   
+        pixy_error.x = model_X(raw_pixy_error.x, sonar_distcm);
+        pixy_error.y = model_Y(raw_pixy_error.y, sonar_distcm);   
     }
     else
     {
@@ -77,10 +80,10 @@ void userhook_50Hz()
 
     //airspeed.read();
 
-    float temp = 0;
+    //float temp = 0;
     //airspeed.get_temperature(temp);
 
-    //Log_Write_Airspeed(airspeed.get_airspeed(), airspeed.get_raw_airspeed(), airspeed.get_airspeed_ratio(), temp);
+    Log_Write_Airspeed(raw_pixy_error.x, raw_pixy_error.y, rw_px_err_fil.x, rw_px_err_fil.y);
 
     //hal.console->printf_P(PSTR("airspeed: %f"), airspeed.get_airspeed());
     //hal.console->printf_P(PSTR("x: %f, y: %f\n"), pixy_error.x, pixy_error.y);
