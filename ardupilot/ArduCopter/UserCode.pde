@@ -10,6 +10,7 @@
 #define TAU 1.0f
 #define TK 0.1f
 #define THRES 10
+#define FILTERDIFF 5
 
 float model_X(int raw_x, int curr_alt)
 {
@@ -50,20 +51,30 @@ void update_pixy_data()
     px_err_k2 = px_err_k1;
     px_err_k1 = px_err_fil;	
 	// Read New Data
-	Vector2f raw_pixy_error = update_irlock(1);
+	Vector3f raw_pixy_error = update_irlock(1);
+	// zrs_chck is the number of times uninterrupted the pixy hasn't been able to update
+	zrs_chck = (zrs_chck + raw_pixy_error.z) * raw_pixy_error.z;	// 'z' is being used as a flag when no update has been made
 	
 	// Write Pin for LED
     hal.rcout->write(4, 0);
 	
 	// Filter X and Y readings
-	px_err_fil.x = filter_pixy_data(raw_pixy_error.x, px_err_k1.x, px_err_k2.x, 320);
-	px_err_fil.y = filter_pixy_data(raw_pixy_error.y, px_err_k1.y, px_err_k2.y, 240);
-    
-	if (!update_error)
+	// Check the number of iterations since last valid update
+	if (zrs_chck < 3)
 	{
-		// DO NOTHING		
+		// Update using previous errors
+		px_err_fil.x = filter_pixy_data(raw_pixy_error.x, px_err_k1.x, px_err_k2.x, 320);
+		px_err_fil.y = filter_pixy_data(raw_pixy_error.y, px_err_k1.y, px_err_k2.y, 240);
+	} 
+	else
+	{
+		// Update using an arbitrary fixed rate of -5 (set by FILTERDIFF)
+		px_err_fil.x = filter_pixy_data(raw_pixy_error.x, 0, FILTERDIFF, 320);
+		px_err_fil.y = filter_pixy_data(raw_pixy_error.y, 0, FILTERDIFF, 240);
 	}
-	else if (!(raw_pixy_error.x == 0 && raw_pixy_error.y == 0))
+	
+    
+	if (!(px_err_fil.x == 0 && px_err_fil.y == 0))
     {
 		// Convert pixels to cms
         pixy_error.x = model_X(px_err_fil.x, sonar_distcm);
