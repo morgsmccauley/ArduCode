@@ -479,6 +479,11 @@ void AC_PosControl::set_pixy_target(float x, float y)
     _pos_target_rel.y = y;
 }
 
+void AC_PosControl::set_optical_vel(float optical_vel)
+{
+    _optical_vel = optical_vel;
+}
+
 /// set_target_to_stopping_point_xy - sets horizontal target to reasonable stopping position in cm from home
 void AC_PosControl::set_target_to_stopping_point_xy()
 {
@@ -869,6 +874,7 @@ void AC_PosControl::pos_to_rate_pixy(xy_mode mode, float dt, float ekfNavVelGain
         _vel_target.x = 0.0f;
         _vel_target.y = 0.0f;
     }else{
+        
         // calculate distance error
         if(!(_pos_target_rel.x == 0 && _pos_target_rel.y == 0))
         {
@@ -880,9 +886,6 @@ void AC_PosControl::pos_to_rate_pixy(xy_mode mode, float dt, float ekfNavVelGain
             _pos_error.x = 0;
             _pos_error.y = 0;
         }
-
-
-        hal.console->printf_P(PSTR("pixy: %f, %f"), _pos_error.x, _pos_error.y);
 
         // calculate the distance at which we swap between linear and sqrt velocity response
         linear_distance = _accel_cms/(2.0f*kP*kP);

@@ -335,7 +335,7 @@ void AC_WPNav::update_loiter(float ekfGndSpdLimit, float ekfNavVelGainScaler)
 }
 
 // update_loiter - run the loiter controller - gets called at 100hz (APM) or 400hz (PX4)
-void AC_WPNav::update_pixy_loiter(float ekfGndSpdLimit, float ekfNavVelGainScaler, Vector2f pixy_pos_error)
+void AC_WPNav::update_pixy_loiter(float ekfGndSpdLimit, float ekfNavVelGainScaler, Vector2f pixy_pos_error, float opt_vel)
 {
     // calculate dt
     float dt = _pos_control.time_since_last_xy_update();
@@ -357,6 +357,8 @@ void AC_WPNav::update_pixy_loiter(float ekfGndSpdLimit, float ekfNavVelGainScale
         calc_loiter_desired_velocity(dt,ekfGndSpdLimit);
 
         _pos_control.set_pixy_target(pixy_latlon.x, pixy_latlon.y);
+
+        _pos_control.set_optical_vel(opt_vel);
 
         _pos_control.update_pixy_controller(AC_PosControl::XY_MODE_POS_LIMITED_AND_VEL_FF, ekfNavVelGainScaler);
     }

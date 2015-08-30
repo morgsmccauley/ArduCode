@@ -58,23 +58,22 @@ void update_pixy_data()
 	// Filter X and Y readings
 	px_err_fil.x = filter_pixy_data(raw_pixy_error.x, px_err_k1.x, px_err_k2.x, 320);
 	px_err_fil.y = filter_pixy_data(raw_pixy_error.y, px_err_k1.y, px_err_k2.y, 240);
-    
-	if (!update_error)
-	{
-		// DO NOTHING		
-	}
-	else if (!(raw_pixy_error.x == 0 && raw_pixy_error.y == 0))
-    {
-		// Convert pixels to cms
+
+
+    Log_Write_Airspeed(raw_pixy_error.x, raw_pixy_error.y, px_err_fil.x, px_err_fil.y);
+
+    if(!(px_err_fil.x == 0 && px_err_fil.y == 0)){
+
         pixy_error.x = model_X(px_err_fil.x, sonar_distcm);
-        pixy_error.y = model_Y(px_err_fil.y, sonar_distcm);   
+        pixy_error.y = model_Y(px_err_fil.y, sonar_distcm);
     }
-    else
-    {
-        pixy_error.x = 0;
-        pixy_error.y = 0;
-    }
-	//Log_Write_Airspeed(raw_pixy_error.x, raw_pixy_error.y, px_err_fil.x, px_err_fil.y);
+    else {
+
+        pixy_error.x = 0.0f;
+        pixy_error.y = 0.0f;
+    }  
+
+    hal.console->printf_P(PSTR("PIXY: %f, %f \n"), pixy_error.x, pixy_error.y);
 }
 
 #ifdef USERHOOK_INIT
@@ -94,6 +93,16 @@ void userhook_init()
 void userhook_FastLoop()
 {
     // put your 100Hz code here
+
+    Vector2f flow = optflow.flowRate();
+    Vector2f body = optflow.bodyRate();
+
+    Vector2f opt_diff;
+
+    opt_diff.x = flow.x - body.x;
+    opt_diff.y = flow.y - body.y;
+
+    opt_vel = (sqrt(pow(opt_diff.x, 2) + pow(opt_diff.y, 2))) * sonar_distcm;
 }
 #endif
 
@@ -108,8 +117,6 @@ void userhook_50Hz()
     //float temp = 0;
     //airspeed.get_temperature(temp);
 
-    //Log_Write_Airspeed(raw_pixy_error.x, raw_pixy_error.y, rw_px_err_fil.x, rw_px_err_fil.y);
-
     //hal.console->printf_P(PSTR("airspeed: %f"), airspeed.get_airspeed());
     //hal.console->printf_P(PSTR("x: %f, y: %f\n"), pixy_error.x, pixy_error.y);
 }
@@ -121,10 +128,6 @@ void userhook_MediumLoop()
     // put your 10Hz code here
 
 	//Log_Write_Sonar((sonar.distance_cm() / 100.0f), sonar.voltage_mv());
-
-    if(relay.enabled(55) == true){
-        relay.on(55);
-    }
 
 	// Read, Filter, & Log Sonar Data
 	sonar_distcm_prvB = sonar_distcm_prvA;

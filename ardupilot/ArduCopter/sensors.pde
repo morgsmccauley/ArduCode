@@ -114,8 +114,6 @@ static Vector2f update_irlock(uint16_t signature)
 {
     static uint32_t last_of_update = 0;
     Vector2f pixy;
-	// Assume an update has been made
-	update_error = true;
 
     if (!irlock.enabled())
         return pixy;
@@ -148,10 +146,7 @@ static Vector2f update_irlock(uint16_t signature)
             Log_Write_Pixy(frame[i].signature, (frame[i].center_x - 155.0f), (frame[i].center_y - 101.0f), frame[i].width, frame[i].height);
             //pixy = {frame[i].center_x, frame[i].center_y};
         }
-    } else {
-		// Correct Original Assumption that an update has been made
-		update_error = false;
-	}
+    }
 
     return pixy;
 }

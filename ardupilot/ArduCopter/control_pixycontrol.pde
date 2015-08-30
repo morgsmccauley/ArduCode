@@ -101,7 +101,7 @@ static void pixycontrol_run()
         */
     }else{
         // run loiter controller
-        wp_nav.update_pixy_loiter(ekfGndSpdLimit, ekfNavVelGainScaler, pixy_error);
+        wp_nav.update_pixy_loiter(ekfGndSpdLimit, ekfNavVelGainScaler, pixy_error, opt_vel);
 
         // call attitude controller
         attitude_control.angle_ef_roll_pitch_rate_ef_yaw(wp_nav.get_roll(), wp_nav.get_pitch(), target_yaw_rate);
