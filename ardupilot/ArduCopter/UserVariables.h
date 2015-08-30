@@ -24,8 +24,9 @@ uint16_t sonar_distance_prv = 0;
 uint16_t sonar_distcm_A = 0;
 
 // Pixy Filtering Variables
-Vector2f rw_px_err_prv;
-Vector2f rw_px_err_fil;
+Vector2f px_err_k2;
+Vector2f px_err_k1;
+Vector2f px_err_fil;
 bool update_error = true;
 
 #endif  // USERHOOK_VARIABLES

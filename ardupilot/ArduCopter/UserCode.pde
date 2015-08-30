@@ -27,6 +27,56 @@ float model_Y(int raw_y, int curr_alt)
 	return (curr_alt * tan(obj_angle));
 }
 
+float filter_pixy_data(float raw, float filt_k1, float filt_k2, uint16_t upper)
+{
+	float filt = -1;
+    if (raw == 0 && ((filt_k1 - raw) > THRES || (filt_k1 - raw) < -THRES))
+	{
+        filt = filt_k1 + (filt_k1 - filt_k2); // Check this does not result in too great a rate of increase
+	}
+	// Check if calculated value is outside of reasonable bounds
+    if ((filt < 0) || (filt > upper))
+	{
+		filt = raw;
+	}
+	
+    return filt;
+
+}
+
+void update_pixy_data()
+{
+	// Update Previous Filter Values
+    px_err_k2 = px_err_k1;
+    px_err_k1 = px_err_fil;	
+	// Read New Data
+	Vector2f raw_pixy_error = update_irlock(1);
+	
+	// Write Pin for LED
+    hal.rcout->write(4, 0);
+	
+	// Filter X and Y readings
+	px_err_fil.x = filter_pixy_data(raw_pixy_error.x, px_err_k1.x, px_err_k2.x, 320);
+	px_err_fil.y = filter_pixy_data(raw_pixy_error.y, px_err_k1.y, px_err_k2.y, 240);
+    
+	if (!update_error)
+	{
+		// DO NOTHING		
+	}
+	else if (!(raw_pixy_error.x == 0 && raw_pixy_error.y == 0))
+    {
+		// Convert pixels to cms
+        pixy_error.x = model_X(px_err_fil.x, sonar_distcm);
+        pixy_error.y = model_Y(px_err_fil.y, sonar_distcm);   
+    }
+    else
+    {
+        pixy_error.x = 0;
+        pixy_error.y = 0;
+    }
+	//Log_Write_Airspeed(raw_pixy_error.x, raw_pixy_error.y, px_err_fil.x, px_err_fil.y);
+}
+
 #ifdef USERHOOK_INIT
 void userhook_init()
 {
@@ -51,36 +101,14 @@ void userhook_FastLoop()
 void userhook_50Hz()
 {
     // put your 50Hz code here
-    Vector2f raw_pixy_error = update_irlock(1);
-
-    hal.rcout->write(4, 0);
-	
-    //convert pixels to cms
-
-    //hal.console->printf_P(PSTR("sonar: %d\n"), sonar.distance_cm());
-
-	if (!update_error)
-	{
-		// DO NOTHING		
-	}
-	else if (!(raw_pixy_error.x == 0 && raw_pixy_error.y == 0))
-    {
-        pixy_error.x = model_X(raw_pixy_error.x, sonar_distcm);
-        pixy_error.y = model_Y(raw_pixy_error.y, sonar_distcm);   
-    }
-    else
-    {
-        pixy_error.x = 0;
-        pixy_error.y = 0;
-    }
-
-
+	update_pixy_data();
+    
     //airspeed.read();
 
     //float temp = 0;
     //airspeed.get_temperature(temp);
 
-    Log_Write_Airspeed(raw_pixy_error.x, raw_pixy_error.y, rw_px_err_fil.x, rw_px_err_fil.y);
+    //Log_Write_Airspeed(raw_pixy_error.x, raw_pixy_error.y, rw_px_err_fil.x, rw_px_err_fil.y);
 
     //hal.console->printf_P(PSTR("airspeed: %f"), airspeed.get_airspeed());
     //hal.console->printf_P(PSTR("x: %f, y: %f\n"), pixy_error.x, pixy_error.y);
