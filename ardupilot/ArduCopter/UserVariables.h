@@ -29,6 +29,8 @@ uint16_t sonar_distcm_A = 0;
 Vector2f px_err_k2;
 Vector2f px_err_k1;
 Vector2f px_err_fil;
+uint16_t zrs_chck = 0;
+
 
 #endif  // USERHOOK_VARIABLES
 

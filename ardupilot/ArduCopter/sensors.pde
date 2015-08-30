@@ -110,10 +110,11 @@ static void init_irlock()
 
 // update the irlock sensor
 #if IRLOCK == ENABLED
-static Vector2f update_irlock(uint16_t signature)
+static Vector3f update_irlock(uint16_t signature)
 {
     static uint32_t last_of_update = 0;
-    Vector2f pixy;
+
+    Vector3f pixy;
 
     if (!irlock.enabled())
         return pixy;
@@ -139,6 +140,7 @@ static Vector2f update_irlock(uint16_t signature)
             if (signature == frame[i].signature){
                 pixy.x = frame[i].center_x;
                 pixy.y = frame[i].center_y;
+				pixy.z = 0;
             }
 
             hal.rcout->write(4, 20000);
@@ -146,8 +148,11 @@ static Vector2f update_irlock(uint16_t signature)
             Log_Write_Pixy(frame[i].signature, (frame[i].center_x - 155.0f), (frame[i].center_y - 101.0f), frame[i].width, frame[i].height);
             //pixy = {frame[i].center_x, frame[i].center_y};
         }
-    }
 
+    }else{
+		pixy.z = 1;
+	}
+    
     return pixy;
 }
 #endif
