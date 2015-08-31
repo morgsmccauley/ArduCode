@@ -45,6 +45,32 @@ float filter_pixy_data(float raw, float filt_k1, float filt_k2, uint16_t upper)
 
 }
 
+void update_sonar_data()
+{
+	// Read, Filter, & Log Sonar Data
+	snr_distcm_k2 = snr_distcm_k1;
+	snr_distcm_k1 = snr_distcm;
+	// Set Temp value for current cm reading - Ensures update if filtering not necessary
+	snr_distcm = -1;
+	// Read current raw value
+	uint16_t raw = sonar.distance_cm();
+
+	// Outlier Filter
+	if((raw > snr_distcm_k1 + THRES) || (raw < snr_distcm_k1 - THRES))
+	{
+        snr_distcm = snr_distcm_k1 + (snr_distcm_k1 - snr_distcm_k2);
+	}
+	// Sanity Check on filtered value
+    if ((snr_distcm < 0) || (snr_distcm > 650)) 
+	{
+        snr_distcm = raw;
+	}
+	// Log Filtered & Raw Data
+    if(AP_Notify::flags.armed){
+        Log_Write_Sonar(snr_distcm, raw, sonar.voltage_mv());
+    }
+}
+
 void update_pixy_data()
 {
 	// Update Previous Filter Values
@@ -81,11 +107,9 @@ void update_pixy_data()
     
 	if (!(px_err_fil.x == 0 && px_err_fil.y == 0))
     {
-		// Convert pixels to cms  
-        pixy_error.x = model_X(px_err_fil.x, sonar_distcm);
-        pixy_error.y = model_Y(px_err_fil.y, sonar_distcm);
-
-        hal.console->printf_P(PSTR("YO\n"));
+		// Convert pixels to cms
+        pixy_error.x = model_X(px_err_fil.x, snr_distcm);
+        pixy_error.y = model_Y(px_err_fil.y, snr_distcm);   
     }
     else {
 
@@ -142,33 +166,7 @@ void userhook_50Hz()
 void userhook_MediumLoop()
 {
     // put your 10Hz code here
-
-	//Log_Write_Sonar((sonar.distance_cm() / 100.0f), sonar.voltage_mv());
-
-	// Read, Filter, & Log Sonar Data
-	sonar_distcm_prvB = sonar_distcm_prvA;
-	sonar_distcm_prvA = sonar_distcm_A;
-	
-	sonar_distcm_prv = sonar_distcm;
-	
-	// Low Pass Filter
-	sonar_distcm = (TAU * sonar_distcm_prv + TK * sonar.distance_cm()) / (TAU + TK);
-	
-	// Outlier Filter
-	if((sonar.distance_cm() > sonar_distance_prv + THRES) || (sonar.distance_cm() < sonar_distance_prv - THRES))
-	{
-        sonar_distcm_A = sonar_distcm_prvA + (sonar_distcm_prvA - sonar_distcm_prvB)/2;
-	}
-    else{
-        sonar_distcm_A = sonar.distance_cm();
-	}
-
-    if(AP_Notify::flags.armed){
-        Log_Write_Sonar(sonar_distcm_A, sonar.distance_cm(), sonar.voltage_mv());
-        hal.console->printf_P(PSTR("logging sonar\n"));
-    }
-	
-	sonar_distance_prv = sonar.distance_cm();
+	update_sonar_data();
 }
 #endif
 
