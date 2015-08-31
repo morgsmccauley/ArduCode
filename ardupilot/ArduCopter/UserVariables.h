@@ -16,7 +16,7 @@ int                 WiiDisplacementY=0;
 
 Vector2f pixy_error;
 
-float opt_vel;
+Vector2f opt_vel;
 
 uint16_t sonar_distcm = 0;
 uint16_t sonar_distcm_prv = 0;

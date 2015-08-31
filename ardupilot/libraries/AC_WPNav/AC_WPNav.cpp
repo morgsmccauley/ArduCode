@@ -335,15 +335,19 @@ void AC_WPNav::update_loiter(float ekfGndSpdLimit, float ekfNavVelGainScaler)
 }
 
 // update_loiter - run the loiter controller - gets called at 100hz (APM) or 400hz (PX4)
-void AC_WPNav::update_pixy_loiter(float ekfGndSpdLimit, float ekfNavVelGainScaler, Vector2f pixy_pos_error, float opt_vel)
+void AC_WPNav::update_pixy_loiter(float ekfGndSpdLimit, float ekfNavVelGainScaler, Vector2f pixy_pos_error, Vector2f _opt_vel)
 {
     // calculate dt
     float dt = _pos_control.time_since_last_xy_update();
 
     Vector2f pixy_latlon;
+    Vector2f opt_vel_latlon;
 
     pixy_latlon.x = pixy_pos_error.x*_ahrs.cos_yaw() - pixy_pos_error.y*_ahrs.sin_yaw();
     pixy_latlon.y = pixy_pos_error.x*_ahrs.sin_yaw() + pixy_pos_error.y*_ahrs.cos_yaw();
+
+    opt_vel_latlon.x = _opt_vel.x*_ahrs.cos_yaw() - _opt_vel.y*_ahrs.sin_yaw();
+    opt_vel_latlon.y = _opt_vel.x*_ahrs.sin_yaw() + _opt_vel.y*_ahrs.cos_yaw();
 
     //hal.console->printf_P(PSTR("X: %f, Y: %f\n"), pixy_pos_error.x, pixy_pos_error.y);
 
@@ -358,7 +362,7 @@ void AC_WPNav::update_pixy_loiter(float ekfGndSpdLimit, float ekfNavVelGainScale
 
         _pos_control.set_pixy_target(pixy_latlon.x, pixy_latlon.y);
 
-        _pos_control.set_optical_vel(opt_vel);
+        _pos_control.set_optical_vel(opt_vel_latlon.x, opt_vel_latlon.y);
 
         _pos_control.update_pixy_controller(AC_PosControl::XY_MODE_POS_LIMITED_AND_VEL_FF, ekfNavVelGainScaler);
     }

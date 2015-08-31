@@ -119,7 +119,7 @@ static Vector3f update_irlock(uint16_t signature)
     if (!irlock.enabled())
         return pixy;
 
-    irlock.update();
+    irlock.update(); 
     
     if (!irlock.healthy()){
         DataFlash.Log_Write_Message("irlock_not_healthy");
@@ -144,9 +144,10 @@ static Vector3f update_irlock(uint16_t signature)
             }
 
             hal.rcout->write(4, 20000);
-	
-            Log_Write_Pixy(frame[i].signature, (frame[i].center_x - 155.0f), (frame[i].center_y - 101.0f), frame[i].width, frame[i].height);
-            //pixy = {frame[i].center_x, frame[i].center_y};
+
+            if(AP_Notify::flags.armed){
+                Log_Write_Pixy(frame[i].signature, (frame[i].center_x - 155.0f), (frame[i].center_y - 101.0f), frame[i].width, frame[i].height);
+            }
         }
 
     }else{

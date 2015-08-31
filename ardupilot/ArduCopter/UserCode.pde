@@ -10,7 +10,7 @@
 #define TAU 1.0f
 #define TK 0.1f
 #define THRES 10
-#define FILTERDIFF 5
+#define FILTERDIFF 10
 
 float model_X(int raw_x, int curr_alt)
 {
@@ -61,7 +61,7 @@ void update_pixy_data()
 	// Filter X and Y readings
 
 	// Check the number of iterations since last valid update
-	if (zrs_chck < 3)
+	if (zrs_chck < 8)
 	{
 		// Update using previous errors
 		px_err_fil.x = filter_pixy_data(raw_pixy_error.x, px_err_k1.x, px_err_k2.x, 320);
@@ -70,18 +70,22 @@ void update_pixy_data()
 	else
 	{
 		// Update using an arbitrary fixed rate of -5 (set by FILTERDIFF)
-		px_err_fil.x = filter_pixy_data(raw_pixy_error.x, 0, FILTERDIFF, 320);
-		px_err_fil.y = filter_pixy_data(raw_pixy_error.y, 0, FILTERDIFF, 240);
+		px_err_fil.x = filter_pixy_data(raw_pixy_error.x, px_err_k1.x, (px_err_k1.x + FILTERDIFF), 320);
+		px_err_fil.y = filter_pixy_data(raw_pixy_error.y, px_err_k1.y, (px_err_k1.y + FILTERDIFF), 240);
 	}
 
-    Log_Write_Airspeed(raw_pixy_error.x, raw_pixy_error.y, px_err_fil.x, px_err_fil.y);
-	
+    if(AP_Notify::flags.armed)
+    {
+        Log_Write_Airspeed(raw_pixy_error.x, raw_pixy_error.y, px_err_fil.x, px_err_fil.y);
+    }
     
 	if (!(px_err_fil.x == 0 && px_err_fil.y == 0))
     {
 		// Convert pixels to cms  
         pixy_error.x = model_X(px_err_fil.x, sonar_distcm);
         pixy_error.y = model_Y(px_err_fil.y, sonar_distcm);
+
+        hal.console->printf_P(PSTR("YO\n"));
     }
     else {
 
@@ -113,12 +117,8 @@ void userhook_FastLoop()
     Vector2f flow = optflow.flowRate();
     Vector2f body = optflow.bodyRate();
 
-    Vector2f opt_diff;
-
-    opt_diff.x = flow.x - body.x;
-    opt_diff.y = flow.y - body.y;
-
-    opt_vel = (sqrt(pow(opt_diff.x, 2) + pow(opt_diff.y, 2))) * sonar_distcm;
+    opt_vel.x = (flow.x - body.x) * sonar_distcm;
+    opt_vel.y = (flow.y - body.y) * sonar_distcm;
 }
 #endif
 
@@ -162,8 +162,11 @@ void userhook_MediumLoop()
     else{
         sonar_distcm_A = sonar.distance_cm();
 	}
-	
-	Log_Write_Sonar(sonar_distcm_A, sonar.distance_cm(), sonar.voltage_mv());
+
+    if(AP_Notify::flags.armed){
+        Log_Write_Sonar(sonar_distcm_A, sonar.distance_cm(), sonar.voltage_mv());
+        hal.console->printf_P(PSTR("logging sonar\n"));
+    }
 	
 	sonar_distance_prv = sonar.distance_cm();
 }

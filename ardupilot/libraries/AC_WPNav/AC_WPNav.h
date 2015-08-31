@@ -97,7 +97,7 @@ public:
     void update_loiter(float ekfGndSpdLimit, float ekfNavVelGainScaler);
 
     //pixy loiter
-    void update_pixy_loiter(float ekfGndSpdLimit, float ekfNavVelGainScaler, Vector2f pixy_pos_error, float opt_vel);
+    void update_pixy_loiter(float ekfGndSpdLimit, float ekfNavVelGainScaler, Vector2f pixy_pos_error, Vector2f _opt_vel);
 
     ///
     /// stop controller

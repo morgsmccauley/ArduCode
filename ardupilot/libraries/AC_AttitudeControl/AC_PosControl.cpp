@@ -479,9 +479,10 @@ void AC_PosControl::set_pixy_target(float x, float y)
     _pos_target_rel.y = y;
 }
 
-void AC_PosControl::set_optical_vel(float optical_vel)
+void AC_PosControl::set_optical_vel(float x, float y)
 {
-    _optical_vel = optical_vel;
+    _optical_vel.x = x;
+    _optical_vel.y = y;
 }
 
 /// set_target_to_stopping_point_xy - sets horizontal target to reasonable stopping position in cm from home
@@ -1033,8 +1034,8 @@ void AC_PosControl::rate_to_accel_pixy(float dt, float ekfNavVelGainScaler)
     _vel_last.y = _vel_target.y;
 
     // calculate velocity error
-    _vel_error.x = _vel_target.x;
-    _vel_error.y = _vel_target.y;
+    _vel_error.x = _vel_target.x;// - _optical_vel.x;
+    _vel_error.y = _vel_target.y;// - _optical_vel.y;
 
     // call pi controller
     _pi_vel_xy.set_input(_vel_error);
