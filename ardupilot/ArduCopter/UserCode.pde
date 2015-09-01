@@ -9,7 +9,8 @@
 
 #define TAU 1.0f
 #define TK 0.1f
-#define THRES 10
+#define THRESPX 10
+#define THRESSN 10
 #define FILTERDIFF 10
 
 float model_X(int raw_x, int curr_alt)
@@ -31,7 +32,7 @@ float model_Y(int raw_y, int curr_alt)
 float filter_pixy_data(float raw, float filt_k1, float filt_k2, uint16_t upper)
 {
 	float filt = -1;
-    if (raw == 0 && ((filt_k1 - raw) > THRES || (filt_k1 - raw) < -THRES))
+    if (raw == 0 && ((filt_k1 - raw) > THRESPX || (filt_k1 - raw) < -THRESPX))
 	{
         filt = filt_k1 + (filt_k1 - filt_k2); // Check this does not result in too great a rate of increase
 	}
@@ -40,33 +41,39 @@ float filter_pixy_data(float raw, float filt_k1, float filt_k2, uint16_t upper)
 	{
 		filt = raw;
 	}
-	
     return filt;
-
 }
 
 void update_sonar_data()
 {
 	// Read, Filter, & Log Sonar Data
+	// Update previous filtered values
 	snr_distcm_k2 = snr_distcm_k1;
 	snr_distcm_k1 = snr_distcm;
 	// Set Temp value for current cm reading - Ensures update if filtering not necessary
 	snr_distcm = -1;
-	// Read current raw value
-	uint16_t raw = sonar.distance_cm();
+	// Read current raw value & update previous raw values
+	rw_snr_k2 = rw_snr_k1;
+	rw_snr_k1 = raw_sn;
+	raw_sn = sonar.distance_cm();
 
 	// Outlier Filter
-	if((raw > snr_distcm_k1 + THRES) || (raw < snr_distcm_k1 - THRES))
+	if(abs(raw_sn - rw_snr_k1) > THRESSN || abs(rw_snr_k1 - rw_snr_k2) > THRESSN)
 	{
-        snr_distcm = snr_distcm_k1 + (snr_distcm_k1 - snr_distcm_k2);
+		int16_t diff = (snr_distcm_k1 - snr_distcm_k2);
+        if (abs(diff) > THRESSN)
+		{
+			diff = (diff / abs(diff)) * THRESSN;
+		}
+        snr_distcm = snr_distcm_k1 + diff;
 	}
 	// Sanity Check on filtered value
     if ((snr_distcm < 0) || (snr_distcm > 650)) 
 	{
-        snr_distcm = raw;
+        snr_distcm = raw_sn;
 	}
 	// Log Filtered & Raw Data
-	Log_Write_Sonar(snr_distcm, raw, sonar.voltage_mv());
+	Log_Write_Sonar(snr_distcm, raw_sn, sonar.voltage_mv());
 }
 
 void update_pixy_data()
