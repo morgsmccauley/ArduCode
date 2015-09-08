@@ -32,6 +32,7 @@ Vector3f px_err_k1;
 Vector3f px_err_fil;
 uint16_t zrs_chck = 0;
 
+Vector3f OF_velocity;
 
 #endif  // USERHOOK_VARIABLES
 

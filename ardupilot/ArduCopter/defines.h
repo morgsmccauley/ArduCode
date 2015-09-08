@@ -241,6 +241,8 @@ enum FlipState {
 #define LOG_PIXY_MSG                    0x20
 #define LOG_AIRSPEED_MSG                0X21
 #define LOG_SONAR_MSG                	0X22
+#define LOG_OFVEL_MSG                   0X23
+#define LOG_PIXYCM_MSG                  0X24
 
 #define MASK_LOG_ATTITUDE_FAST          (1<<0)
 #define MASK_LOG_ATTITUDE_MED           (1<<1)

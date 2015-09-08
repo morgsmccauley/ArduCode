@@ -125,7 +125,7 @@ void update_pixy_data()
     
     if(AP_Notify::flags.armed)
     {
-        Log_Write_Airspeed(pixy_error.x, pixy_error.y, px_err_fil.x, px_err_fil.y);
+        Log_Write_PixyCM(pixy_error.x, pixy_error.y, px_err_fil.x, px_err_fil.y);
     }
 
     //hal.console->printf_P(PSTR("PIXY: %f, %f \n"), pixy_error.x, pixy_error.y);
@@ -169,7 +169,18 @@ void userhook_FastLoop()
     opt_vel.x = filtered_value_y;
     opt_vel.y = -filtered_value_x;
 */
-    
+
+    Vector2f vel_target =  pos_control.get_velocity_target();
+    Vector2f actual_vel = pos_control.get_optical_vel();
+
+    Vector2f error;
+
+    error.x = vel_target.x - actual_vel.x;
+    error.y = vel_target.y - actual_vel.y;
+
+    uint8_t qual = optflow.quality();
+
+    Log_Write_OFVEL(qual, vel_target.x, vel_target.y, actual_vel.x, actual_vel.y, error.x, error.y);
 }
 #endif
 
@@ -186,6 +197,8 @@ void userhook_50Hz()
 
     //hal.console->printf_P(PSTR("airspeed: %f"), airspeed.get_airspeed());
     //hal.console->printf_P(PSTR("x: %f, y: %f\n"), pixy_error.x, pixy_error.y);
+
+    //Log_Write_Airspeed
 }
 #endif
 

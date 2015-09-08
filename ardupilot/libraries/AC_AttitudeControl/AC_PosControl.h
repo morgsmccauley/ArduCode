@@ -204,6 +204,10 @@ public:
 
     void set_optical_vel(float x, float y);
 
+    Vector2f get_optical_vel();
+
+    Vector2f get_velocity_target(); 
+
     /// get_desired_velocity - returns xy desired velocity (i.e. feed forward) in cm/s in lat and lon direction
     const Vector3f& get_desired_velocity() { return _vel_desired; }
 
@@ -404,6 +408,8 @@ private:
     float       _distance_to_target;    // distance to position target - for reporting only
     LowPassFilterFloat _vel_error_filter;   // low-pass-filter on z-axis velocity error
     Vector2f    _optical_vel;
+    Vector2f    optical_velocity;
+    Vector2f    velocity_target;
 
     Vector2f    _accel_target_jerk_limited; // acceleration target jerk limited to 100deg/s/s
     LowPassFilterVector2f _accel_target_filter; // acceleration target filter

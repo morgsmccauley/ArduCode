@@ -485,6 +485,16 @@ void AC_PosControl::set_optical_vel(float x, float y)
     _optical_vel.y = y;
 }
 
+Vector2f AC_PosControl::get_optical_vel()
+{
+    return optical_velocity;
+}
+
+Vector2f AC_PosControl::get_velocity_target()
+{
+    return velocity_target;
+}
+
 /// set_target_to_stopping_point_xy - sets horizontal target to reasonable stopping position in cm from home
 void AC_PosControl::set_target_to_stopping_point_xy()
 {
@@ -1008,6 +1018,12 @@ void AC_PosControl::rate_to_accel_pixy(float dt, float ekfNavVelGainScaler)
     const Vector3f &vel_curr = _inav.get_velocity();  // current velocity in cm/s
     float accel_total;                          // total acceleration in cm/s/s
     Vector2f vel_xy_p, vel_xy_i;
+
+    optical_velocity.x = vel_curr.x;
+    optical_velocity.y = vel_curr.y;
+
+    velocity_target.x = _vel_target.x;
+    velocity_target.y = _vel_target.y;
 
     // reset last velocity target to current target
     if (_flags.reset_rate_to_accel_xy) {

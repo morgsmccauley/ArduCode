@@ -265,9 +265,55 @@ static void Log_Write_Airspeed(float air_speed, float raw_airspeed, float temper
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
 
+struct PACKED log_OFVEL {
+    LOG_PACKET_HEADER;
+    uint8_t quality;
+    float target_x;
+    float target_y;
+    float vel_x;
+    float vel_y;
+    float error_x;
+    float error_y;
+};
+
+static void Log_Write_OFVEL(uint8_t quality, float target_x, float target_y, float vel_x, float vel_y, float error_x, float error_y)
+{
+    struct log_OFVEL pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_OFVEL_MSG),
+	    quality : quality,
+        target_x : target_x,
+        target_y : target_y,
+        vel_x : vel_x,
+        vel_y : vel_y,
+        error_x : error_x,
+        error_y : error_y,
+    };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}
+
+struct PACKED log_PixyCM {
+    LOG_PACKET_HEADER;
+    float filt_x;
+    float filt_y;
+    float x_cm;
+    float y_cm;
+};
+
+static void Log_Write_PixyCM(float filt_x, float filt_y, float x_cm, float y_cm)
+{
+    struct log_PixyCM pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_PIXYCM_MSG),
+        filt_x : filt_x,
+        filt_y : filt_y,
+        x_cm : x_cm,
+        y_cm : y_cm,
+    };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}
+
 struct PACKED log_sonar {
     LOG_PACKET_HEADER;
-	float filt_dist;
+    float filt_dist;
     float distance;
     float voltage;
 };
@@ -276,7 +322,7 @@ static void Log_Write_Sonar(float filt_dist, float distance, float voltage)
 {
     struct log_sonar pkt = {
         LOG_PACKET_HEADER_INIT(LOG_SONAR_MSG),
-	    filt_dist : filt_dist,
+        filt_dist : filt_dist,
         distance : distance,
         voltage : voltage,
     };
@@ -741,6 +787,10 @@ static const struct LogStructure log_structure[] PROGMEM = {
       "ASPD", "ffff",       "air, raw_air, air_ratio, temp"},
 	{ LOG_SONAR_MSG, sizeof(log_sonar),
       "SONR", "fff",       "fdist, dist, volt"},
+    { LOG_OFVEL_MSG, sizeof(log_OFVEL),
+      "OFV", "Bffff",        "qual, x_target, y_target, x_vel, y_vel"},
+    { LOG_PIXYCM_MSG, sizeof(log_PixyCM),
+      "PXCM", "ffff",      "filt_x, filt_y, x_cm, y_cm" },
 };
 
 #if CLI_ENABLED == ENABLED
