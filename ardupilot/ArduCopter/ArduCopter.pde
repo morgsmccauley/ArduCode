@@ -158,6 +158,7 @@
 #include <AP_LandingGear.h>     // Landing Gear library
 #include <AP_Terrain.h>
 #include <AP_IRLock.h>          //IRLock library
+#include <LowPassFilter.h>
 
 // AP_HAL to Arduino compatibility layer
 #include "compat.h"
@@ -305,6 +306,12 @@ static AP_IRLock_PX4 irlock(ahrs);
 #error Unrecognized IRLOCK setting
 #endif
 #endif
+
+////////////////////////////////////////////////////////////////////////////////
+// LOW PASS FILTER
+////////////////////////////////////////////////////////////////////////////////
+LowPassFilterFloat low_pass_filter_x;
+LowPassFilterFloat low_pass_filter_y;
 
 ////////////////////////////////////////////////////////////////////////////////
 // AIRSPEED

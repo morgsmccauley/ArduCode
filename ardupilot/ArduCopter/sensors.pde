@@ -43,7 +43,9 @@ static int16_t read_sonar(void)
         return 0;
     }
 
-    int16_t temp_alt = sonar.distance_cm();
+    int16_t temp_alt = snr_distcm;//sonar.distance_cm();
+
+    //hal.console->printf_P(PSTR("ALT: %d\n"), temp_alt);
 
     if (temp_alt >= sonar.min_distance_cm() && 
         temp_alt <= sonar.max_distance_cm() * SONAR_RELIABLE_DISTANCE_PCT) {
@@ -54,12 +56,12 @@ static int16_t read_sonar(void)
         sonar_alt_health = 0;
     }
 
- #if SONAR_TILT_CORRECTION == 1
+ //#if SONAR_TILT_CORRECTION == 1
     // correct alt for angle of the sonar
     float temp = ahrs.cos_pitch() * ahrs.cos_roll();
     temp = max(temp, 0.707f);
     temp_alt = (float)temp_alt * temp;
- #endif
+ //#endif
 
     return temp_alt;
 #else
@@ -141,13 +143,12 @@ static Vector3f update_irlock(uint16_t signature)
                 pixy.x = frame[i].center_x;
                 pixy.y = frame[i].center_y;
 				pixy.z = 0;
+                if(AP_Notify::flags.armed){
+                    Log_Write_Pixy(frame[i].signature, (frame[i].center_x - 155), (frame[i].center_y - 101), frame[i].width, frame[i].height);
+                }
             }
 
-            hal.rcout->write(4, 20000);
-
-            if(AP_Notify::flags.armed){
-                Log_Write_Pixy(frame[i].signature, (frame[i].center_x - 155.0f), (frame[i].center_y - 101.0f), frame[i].width, frame[i].height);
-            }
+            //hal.rcout->write(4, 20000);
         }
 
     }else{

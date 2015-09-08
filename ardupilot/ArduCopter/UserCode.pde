@@ -77,6 +77,8 @@ void update_sonar_data()
         Log_Write_Sonar(snr_distcm, raw_sn, sonar.voltage_mv());
     }
 
+    //hal.console->printf_P(PSTR("SONAR: %d, %d\n"), snr_distcm, sonar.voltage_mv());
+
 }
 
 void update_pixy_data()
@@ -107,11 +109,6 @@ void update_pixy_data()
 		px_err_fil.x = filter_pixy_data(raw_pixy_error.x, px_err_k1.x, (px_err_k1.x + FILTERDIFF), 320);
 		px_err_fil.y = filter_pixy_data(raw_pixy_error.y, px_err_k1.y, (px_err_k1.y + FILTERDIFF), 240);
 	}
-
-    if(AP_Notify::flags.armed)
-    {
-        Log_Write_Airspeed(raw_pixy_error.x, raw_pixy_error.y, px_err_fil.x, px_err_fil.y);
-    }
     
 	if (!(px_err_fil.x == 0 && px_err_fil.y == 0))
     {
@@ -125,11 +122,13 @@ void update_pixy_data()
         pixy_error.y = 0.0f;
     }
 
-    if(AP_Notify::flags.armed){
-        Log_Write_Pixy(1, 2, 3, pixy_error.x, pixy_error.y);
+    
+    if(AP_Notify::flags.armed)
+    {
+        Log_Write_Airspeed(pixy_error.x, pixy_error.y, px_err_fil.x, px_err_fil.y);
     }
 
-    hal.console->printf_P(PSTR("PIXY: %f, %f \n"), pixy_error.x, pixy_error.y);
+    //hal.console->printf_P(PSTR("PIXY: %f, %f \n"), pixy_error.x, pixy_error.y);
 }
 
 #ifdef USERHOOK_INIT
@@ -141,7 +140,13 @@ void userhook_init()
     //airspeed.init();
     //airspeed.calibrate(false);
 
-    hal.rcout->enable_ch(5);
+    //hal.rcout->enable_ch(5);
+
+    low_pass_filter_x.set_cutoff_frequency(0.3185f);
+    low_pass_filter_x.reset(0);
+
+    low_pass_filter_y.set_cutoff_frequency(0.3185f);
+    low_pass_filter_y.reset(0);
 }
 #endif
 
@@ -149,12 +154,22 @@ void userhook_init()
 void userhook_FastLoop()
 {
     // put your 100Hz code here
-
+/*
     Vector2f flow = optflow.flowRate();
     Vector2f body = optflow.bodyRate();
+    Vector2f temp;
 
-    opt_vel.x = (flow.x - body.x) * sonar_distcm;
-    opt_vel.y = (flow.y - body.y) * sonar_distcm;
+    temp.x = (flow.x - body.x) * snr_distcm;
+    temp.y = (flow.y - body.y) * snr_distcm;
+
+
+    float filtered_value_x = low_pass_filter_x.apply(temp.x, 0.01f);
+    float filtered_value_y = low_pass_filter_y.apply(temp.y, 0.01f);
+
+    opt_vel.x = filtered_value_y;
+    opt_vel.y = -filtered_value_x;
+*/
+    
 }
 #endif
 

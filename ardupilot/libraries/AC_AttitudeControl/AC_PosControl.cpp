@@ -1005,6 +1005,7 @@ void AC_PosControl::rate_to_accel_xy(float dt, float ekfNavVelGainScaler)
 ///    converts desired velocities in lat/lon directions to accelerations in lat/lon frame
 void AC_PosControl::rate_to_accel_pixy(float dt, float ekfNavVelGainScaler)
 {
+    const Vector3f &vel_curr = _inav.get_velocity();  // current velocity in cm/s
     float accel_total;                          // total acceleration in cm/s/s
     Vector2f vel_xy_p, vel_xy_i;
 
@@ -1034,8 +1035,8 @@ void AC_PosControl::rate_to_accel_pixy(float dt, float ekfNavVelGainScaler)
     _vel_last.y = _vel_target.y;
 
     // calculate velocity error
-    _vel_error.x = _vel_target.x;// - _optical_vel.x;
-    _vel_error.y = _vel_target.y;// - _optical_vel.y;
+    _vel_error.x = _vel_target.x - vel_curr.x;// - _optical_vel.x;
+    _vel_error.y = _vel_target.y - vel_curr.y;// - _optical_vel.y;
 
     // call pi controller
     _pi_vel_xy.set_input(_vel_error);
