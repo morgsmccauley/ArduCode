@@ -788,9 +788,9 @@ static const struct LogStructure log_structure[] PROGMEM = {
 	{ LOG_SONAR_MSG, sizeof(log_sonar),
       "SONR", "fff",       "fdist, dist, volt"},
     { LOG_OFVEL_MSG, sizeof(log_OFVEL),
-      "OFV", "Bffff",        "qual, x_target, y_target, x_vel, y_vel"},
+      "OFV", "Bffffff",        "qual, x_target, y_target, x_vel, y_vel, error_x, error_y"},
     { LOG_PIXYCM_MSG, sizeof(log_PixyCM),
-      "PXCM", "ffff",      "filt_x, filt_y, x_cm, y_cm" },
+      "PXCM", "ffff",      "x_cm, y_cm, latlon_x, latlon_y" },
 };
 
 #if CLI_ENABLED == ENABLED

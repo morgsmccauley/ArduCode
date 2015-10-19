@@ -97,7 +97,7 @@ public:
     void update_loiter(float ekfGndSpdLimit, float ekfNavVelGainScaler);
 
     //pixy loiter
-    void update_pixy_loiter(float ekfGndSpdLimit, float ekfNavVelGainScaler, Vector2f pixy_pos_error, Vector2f _opt_vel);
+    void update_pixy_loiter(float ekfGndSpdLimit, float ekfNavVelGainScaler, Vector2f pixy_pos_error);
 
     ///
     /// stop controller
@@ -322,5 +322,7 @@ protected:
     Vector3f    _hermite_spline_solution[4]; // array describing spline path between origin and destination
     float       _spline_vel_scaler;	    //
     float       _yaw;                   // heading according to yaw
+
+    uint32_t    pixy_last_update;
 };
 #endif	// AC_WPNAV_H
