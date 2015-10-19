@@ -91,8 +91,7 @@ void update_pixy_data()
 	// zrs_chck is the number of times uninterrupted the pixy hasn't been able to update
 	zrs_chck = (zrs_chck + raw_pixy_error.z) * raw_pixy_error.z;	// 'z' is being used as a flag when no update has been made
 	
-	// Write Pin for LED
-    hal.rcout->write(4, 0);
+    Vector2f temp;
 	
 	// Filter X and Y readings
 
@@ -122,10 +121,13 @@ void update_pixy_data()
         pixy_error.y = 0.0f;
     }
 
+    temp.x = irlock.lat_conversion(pixy_error.x, pixy_error.y);
+    temp.y = irlock.lon_conversion(pixy_error.x, pixy_error.y);
+
     
     if(AP_Notify::flags.armed)
     {
-        Log_Write_PixyCM(pixy_error.x, pixy_error.y, px_err_fil.x, px_err_fil.y);
+        Log_Write_PixyCM(pixy_error.x, pixy_error.y, temp.x, temp.y);
     }
 
     //hal.console->printf_P(PSTR("PIXY: %f, %f \n"), pixy_error.x, pixy_error.y);
@@ -136,11 +138,6 @@ void userhook_init()
 {
     // put your initialisation code here
     // this will be called once at start-up
-
-    //airspeed.init();
-    //airspeed.calibrate(false);
-
-    //hal.rcout->enable_ch(5);
 
     low_pass_filter_x.set_cutoff_frequency(0.3185f);
     low_pass_filter_x.reset(0);
@@ -154,21 +151,23 @@ void userhook_init()
 void userhook_FastLoop()
 {
     // put your 100Hz code here
-/*
-    Vector2f flow = optflow.flowRate();
-    Vector2f body = optflow.bodyRate();
-    Vector2f temp;
+    
+}
+#endif
 
-    temp.x = (flow.x - body.x) * snr_distcm;
-    temp.y = (flow.y - body.y) * snr_distcm;
+#ifdef USERHOOK_50HZLOOP
+void userhook_50Hz()
+{
+    // put your 50Hz code here
+	update_pixy_data();
+}
+#endif
 
-
-    float filtered_value_x = low_pass_filter_x.apply(temp.x, 0.01f);
-    float filtered_value_y = low_pass_filter_y.apply(temp.y, 0.01f);
-
-    opt_vel.x = filtered_value_y;
-    opt_vel.y = -filtered_value_x;
-*/
+#ifdef USERHOOK_MEDIUMLOOP
+void userhook_MediumLoop()
+{
+    // put your 10Hz code here
+	update_sonar_data();
 
     Vector2f vel_target =  pos_control.get_velocity_target();
     Vector2f actual_vel = pos_control.get_optical_vel();
@@ -181,32 +180,7 @@ void userhook_FastLoop()
     uint8_t qual = optflow.quality();
 
     Log_Write_OFVEL(qual, vel_target.x, vel_target.y, actual_vel.x, actual_vel.y, error.x, error.y);
-}
-#endif
-
-#ifdef USERHOOK_50HZLOOP
-void userhook_50Hz()
-{
-    // put your 50Hz code here
-	update_pixy_data();
     
-    //airspeed.read();
-
-    //float temp = 0;
-    //airspeed.get_temperature(temp);
-
-    //hal.console->printf_P(PSTR("airspeed: %f"), airspeed.get_airspeed());
-    //hal.console->printf_P(PSTR("x: %f, y: %f\n"), pixy_error.x, pixy_error.y);
-
-    //Log_Write_Airspeed
-}
-#endif
-
-#ifdef USERHOOK_MEDIUMLOOP
-void userhook_MediumLoop()
-{
-    // put your 10Hz code here
-	update_sonar_data();
 }
 #endif
 

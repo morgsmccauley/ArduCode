@@ -90,7 +90,7 @@ static void pixycontrol_run()
 
     // when landed reset targets and output zero throttle
     if (false) {//ap.land_complete) {
-        /*
+        
         Vector3f pixy_3f_error = {pixy_error.x, pixy_error.y, 0};
 
         wp_nav.init_pixy_target(pixy_3f_error, true);
@@ -98,10 +98,10 @@ static void pixycontrol_run()
         // move throttle to between minimum and non-takeoff-throttle to keep us on the ground
         attitude_control.set_throttle_out_unstabilized(get_throttle_pre_takeoff(g.rc_3.control_in),true,g.throttle_filt);
         pos_control.relax_alt_hold_controllers(get_throttle_pre_takeoff(g.rc_3.control_in)-throttle_average);
-        */
+        
     }else{
         // run loiter controller
-        wp_nav.update_pixy_loiter(ekfGndSpdLimit, ekfNavVelGainScaler, pixy_error, opt_vel);
+        wp_nav.update_pixy_loiter(ekfGndSpdLimit, ekfNavVelGainScaler, pixy_error);
 
         // call attitude controller
         attitude_control.angle_ef_roll_pitch_rate_ef_yaw(wp_nav.get_roll(), wp_nav.get_pitch(), target_yaw_rate);

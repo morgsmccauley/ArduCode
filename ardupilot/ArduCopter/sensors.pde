@@ -45,8 +45,6 @@ static int16_t read_sonar(void)
 
     int16_t temp_alt = snr_distcm;//sonar.distance_cm();
 
-    //hal.console->printf_P(PSTR("ALT: %d\n"), temp_alt);
-
     if (temp_alt >= sonar.min_distance_cm() && 
         temp_alt <= sonar.max_distance_cm() * SONAR_RELIABLE_DISTANCE_PCT) {
         if ( sonar_alt_health < SONAR_ALT_HEALTH_MAX ) {
@@ -147,8 +145,6 @@ static Vector3f update_irlock(uint16_t signature)
                     Log_Write_Pixy(frame[i].signature, (frame[i].center_x - 155), (frame[i].center_y - 101), frame[i].width, frame[i].height);
                 }
             }
-
-            //hal.rcout->write(4, 20000);
         }
 
     }else{

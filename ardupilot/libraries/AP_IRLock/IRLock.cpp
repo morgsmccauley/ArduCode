@@ -6,6 +6,7 @@
  */
 
 #include "IRLock.h"
+#include <AP_HAL.h>
 
 // not sure what is going on here...
 //const AP_Param::GroupInfo IRLock::var_info[] PROGMEM = {
@@ -58,4 +59,18 @@ void IRLock::get_current_frame(irlock_block data[IRLOCK_MAX_BLOCKS_PER_FRAME]) c
 		data[index].width = 0;
 		data[index].height = 0;
 	}
+}
+
+float IRLock::lat_conversion (float x, float y){
+
+	float lat;
+
+	return lat = x*_ahrs.cos_yaw() - y*_ahrs.sin_yaw();
+}
+
+float IRLock::lon_conversion (float x, float y){
+
+	float lon;
+
+    return lon = x*_ahrs.sin_yaw() + y*_ahrs.cos_yaw();
 }

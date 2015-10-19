@@ -59,6 +59,10 @@ public:
 	// returns the number of blocks in the current frame
 	size_t num_blocks() const { return _num_blocks; }
 
+	float lat_conversion(float x, float y);
+
+	float lon_conversion(float x, float y);
+
 	// retrieve latest sensor data
 	virtual void update() = 0;
 
